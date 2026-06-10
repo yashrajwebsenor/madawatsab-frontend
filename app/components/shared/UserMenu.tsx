@@ -42,7 +42,7 @@ const UserMenu = () => {
           color="primary"
           name={user?.fullName}
           className="object-cover transition-transform"
-          src={user?.photos?.[0]?.url}
+          src={user?.profilePhoto?.url}
         />
       </DropdownTrigger>
       <DropdownMenu

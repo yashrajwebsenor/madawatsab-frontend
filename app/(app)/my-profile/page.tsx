@@ -2,10 +2,12 @@
 
 import EducationSection from "@/app/components/my-profile/EducationSection";
 import FamilySection from "@/app/components/my-profile/FamilySection";
+import LifestyleSection from "@/app/components/my-profile/LifestyleSection";
 import MembershipCard from "@/app/components/my-profile/MembershipCard";
 import MyProfileDetailsCard from "@/app/components/my-profile/MyProfileDetails";
 import PersonalInformation from "@/app/components/my-profile/PersonalInformation";
 import ProfilePhotoSection from "@/app/components/my-profile/ProfilePhotoSection";
+import ReligiousSection from "@/app/components/my-profile/ReligiousSection";
 import PageHeaderWrapper from "@/app/components/shared/PageHeaderWrapper";
 import { IoSettingsOutline } from "react-icons/io5";
 
@@ -40,6 +42,8 @@ const page = () => {
             <PersonalInformation />
             <EducationSection />
             <FamilySection />
+            <ReligiousSection />
+            <LifestyleSection />
           </div>
           <div className="flex flex-col gap-7 flex-1 sticky top-24">
             <MembershipCard />

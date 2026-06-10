@@ -73,6 +73,59 @@ export const languages = [
   { title: "Japanese (日本語)", value: "Japanese" },
 ];
 
+export const sportsList = [
+  { title: "Cricket", value: "Cricket" },
+  { title: "Football", value: "Football" },
+  { title: "Badminton", value: "Badminton" },
+  { title: "Tennis", value: "Tennis" },
+  { title: "Table Tennis", value: "Table Tennis" },
+  { title: "Hockey", value: "Hockey" },
+  { title: "Basketball", value: "Basketball" },
+  { title: "Volleyball", value: "Volleyball" },
+  { title: "Kabaddi", value: "Kabaddi" },
+  { title: "Swimming", value: "Swimming" },
+  { title: "Cycling", value: "Cycling" },
+  { title: "Running", value: "Running" },
+  { title: "Gym / Fitness", value: "Gym / Fitness" },
+  { title: "Yoga", value: "Yoga" },
+  { title: "Chess", value: "Chess" },
+  { title: "Carrom", value: "Carrom" },
+];
+
+export const hobbiesList = [
+  { title: "Reading", value: "Reading" },
+  { title: "Writing", value: "Writing" },
+  { title: "Travelling", value: "Travelling" },
+  { title: "Cooking", value: "Cooking" },
+  { title: "Photography", value: "Photography" },
+  { title: "Painting / Art", value: "Painting / Art" },
+  { title: "Gardening", value: "Gardening" },
+  { title: "Gaming", value: "Gaming" },
+  { title: "Music", value: "Music" },
+  { title: "Dancing", value: "Dancing" },
+  { title: "Fitness", value: "Fitness" },
+  { title: "Movies & TV", value: "Movies & TV" },
+  { title: "Volunteering", value: "Volunteering" },
+  { title: "Calligraphy", value: "Calligraphy" },
+  { title: "Blogging", value: "Blogging" },
+  { title: "Shopping", value: "Shopping" },
+];
+
+export const musicTypes = [
+  { title: "Naat / Hamd", value: "Naat / Hamd" },
+  { title: "Qawwali", value: "Qawwali" },
+  { title: "Ghazal", value: "Ghazal" },
+  { title: "Sufi", value: "Sufi" },
+  { title: "Classical", value: "Classical" },
+  { title: "Bollywood", value: "Bollywood" },
+  { title: "Pop", value: "Pop" },
+  { title: "Rock", value: "Rock" },
+  { title: "Hip Hop / Rap", value: "Hip Hop / Rap" },
+  { title: "Folk", value: "Folk" },
+  { title: "Instrumental", value: "Instrumental" },
+  { title: "Devotional", value: "Devotional" },
+];
+
 export const spinWheelData = [
   {
     key: "free-access",

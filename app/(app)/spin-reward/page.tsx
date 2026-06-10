@@ -4,11 +4,11 @@ import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { Button, Card } from "@heroui/react";
 import { spinWheelData } from "@/app/configs/data";
-import Link from "next/link";
 import routes from "@/app/configs/route-paths";
 import { useRouter } from "next/navigation";
 import SpinResultDialog from "@/app/components/dialogs/SpinResultDialog";
 import useUserStore from "@/app/store/useUserStore";
+import useConfigStore from "@/app/store/useConfigStore";
 import useProfile from "@/app/hooks/useProfile";
 import OnboardingLeftSection from "@/app/components/shared/OnboardingLeftSection";
 import Image from "next/image";
@@ -22,19 +22,30 @@ const Wheel = dynamic(
 const Page = () => {
   const router = useRouter();
   const { user } = useUserStore();
+  const { config } = useConfigStore();
   const { updateMyProfile } = useProfile();
   const [mustSpin, setMustSpin] = useState(false);
   const [prizeNumber, setPrizeNumber] = useState(0);
   const [result, setResult] = useState<string | null>(null);
 
+  const spinWheelEnabled = config?.spinWheelEnabled !== "false";
+
   useEffect(() => {
-    if (user?.spinReward) {
+    // Leave the spin screen once it has been resolved (spun/skipped/waived) or
+    // the admin disabled the wheel.
+    if (user?.spinResolved || !spinWheelEnabled) {
       router.push(routes.home);
     }
-  }, [user?.spinReward]);
+  }, [user?.spinResolved, spinWheelEnabled]);
 
   const handleCloseDialog = () => {
     setResult(null);
+    router.push(routes.home);
+  };
+
+  // Skipping still resolves the spin step so the wheel is never shown again.
+  const handleSkip = async () => {
+    await updateMyProfile({ spinResolved: true });
     router.push(routes.home);
   };
 
@@ -107,7 +118,7 @@ const Page = () => {
             {mustSpin ? "SPINNING..." : "SPIN THE WHEEL"}
           </Button>
 
-          <Button as={Link} href={routes.home} variant="light">
+          <Button variant="light" onPress={handleSkip} isDisabled={mustSpin}>
             Skip For Now
           </Button>
         </Card>

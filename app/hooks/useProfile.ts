@@ -36,7 +36,7 @@ const useProfile = () => {
           color: "success",
           description: "Profile updated successfully",
         });
-        getMyProfile();
+        await getMyProfile();
       }
       return;
     } catch (error) {

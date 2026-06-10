@@ -25,7 +25,7 @@ const isStepComplete = (step: number, user?: User | null): boolean => {
     case 3:
       return !!user?.qualification && !!user?.occupation && !!user?.annualIncome;
     case 4:
-      return !!user?.photos?.length;
+      return !!user?.profilePhoto;
     default:
       return true;
   }

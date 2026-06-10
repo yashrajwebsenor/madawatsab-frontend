@@ -5,13 +5,13 @@ import ENDPOINTS from "@/app/api/endpoints";
 import PhotoGridCard from "@/app/components/cards/PhotoGridCard";
 import OnboardingContinueButton from "@/app/components/onboarding/OnboardingContinueButton";
 import OnboardingHeader from "@/app/components/onboarding/OnboardingHeader";
-import { PhotoGridSkeleton } from "@/app/components/shared/Skeletons";
 import OnboardingLeftSection from "@/app/components/shared/OnboardingLeftSection";
 import PhotoUploader from "@/app/components/shared/PhotoUploader";
 import routes from "@/app/configs/route-paths";
 import useProfile from "@/app/hooks/useProfile";
 import useUserStore from "@/app/store/useUserStore";
 import { Photo } from "@/app/types/types";
+import { AttachmentStatus } from "@/app/types/enum";
 import { addToast, Alert, Card, Switch } from "@heroui/react";
 import clsx from "clsx";
 import Image from "next/image";
@@ -23,34 +23,59 @@ const page = () => {
   const { user } = useUserStore();
   const { updateMyProfile } = useProfile();
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [isPrivate, setIsPrivate] = useState(false);
-  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [profilePhoto, setProfilePhoto] = useState<Photo | null>(null);
+  const [otherPhotos, setOtherPhotos] = useState<Photo[]>([]);
 
   useEffect(() => {
-    if (user?.photos?.length) {
-      setPhotos(user?.photos);
-      setIsPrivate(user?.isPrivate);
-    }
+    if (!user) return;
+    if (user.profilePhoto) setProfilePhoto(user.profilePhoto);
+    if (user.photos?.length) setOtherPhotos(user.photos);
+    setIsPrivate(user.isPrivate);
   }, [user]);
 
-  const handlePhotoSelect = (file: File) => {
-    const temp = [...(photos ?? [])];
-    temp.push({
-      _id: "",
-      url: file as any,
-    });
-    setPhotos(temp);
+  const previewUrl = (photo: Photo) =>
+    photo._id ? photo.url : URL.createObjectURL(photo.url as any);
+
+  const handleProfileSelect = (file: File) => {
+    setProfilePhoto({ _id: "", url: file as any });
   };
 
-  const handleRemove = async (photo: Photo, index: number) => {
+  const handleRemoveProfile = async () => {
+    try {
+      setLoading(true);
+      if (profilePhoto?._id) {
+        await api.delete(ENDPOINTS.PROFILE.DELETE_PHOTO(profilePhoto._id));
+      }
+      setProfilePhoto(null);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const MAX_OTHER_PHOTOS = 5;
+
+  const handleOtherSelect = (files: File[]) => {
+    setOtherPhotos((prev) => {
+      const remaining = MAX_OTHER_PHOTOS - prev.length;
+      if (remaining <= 0) return prev;
+      const additions = files
+        .slice(0, remaining)
+        .map((file) => ({ _id: "", url: file as any }));
+      return [...prev, ...additions];
+    });
+  };
+
+  const handleRemoveOther = async (photo: Photo, index: number) => {
     try {
       setLoading(true);
       if (photo._id) {
         await api.delete(ENDPOINTS.PROFILE.DELETE_PHOTO(photo._id));
       }
-      const temp = [...(photos ?? [])];
-      temp.splice(index, 1);
-      setPhotos(temp);
+      setOtherPhotos((prev) => prev.filter((_, i) => i !== index));
     } catch (error) {
       console.log(error);
     } finally {
@@ -59,41 +84,55 @@ const page = () => {
   };
 
   const handleUpload = async () => {
-    const newRecords = photos?.filter((photo) => !photo._id);
+    if (!profilePhoto) {
+      addToast({
+        title: "Profile photo required",
+        color: "warning",
+        description: "Please add a profile photo to continue.",
+      });
+      return;
+    }
 
     try {
-      if (newRecords?.length) {
+      setLoading(true);
+      setUploading(true);
+
+      // Upload (replace) the main profile photo if a new file was picked.
+      if (!profilePhoto._id) {
         const payload = new FormData();
-
-        newRecords.forEach((ev) => {
-          payload.append("photos", ev.url);
-        });
-
-        setLoading(true);
-
-        await api.post(ENDPOINTS.PROFILE.UPLOAD_MULTIPLE_PHOTOS, payload, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
-
-        await updateMyProfile({
-          isPrivate,
-          isOnboardingCompleted: true,
-        });
-
-        addToast({
-          title: "Success",
-          color: "success",
-          description: "Photos uploaded successfully",
+        payload.append("photo", profilePhoto.url as any);
+        await api.post(ENDPOINTS.PROFILE.UPLOAD_PROFILE_PHOTO, payload, {
+          headers: { "Content-Type": "multipart/form-data" },
         });
       }
+
+      // Upload any newly added gallery photos.
+      const newOthers = otherPhotos.filter((photo) => !photo._id);
+      if (newOthers.length) {
+        const payload = new FormData();
+        newOthers.forEach((photo) => payload.append("photos", photo.url as any));
+        await api.post(ENDPOINTS.PROFILE.UPLOAD_MULTIPLE_PHOTOS, payload, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      }
+
+      await updateMyProfile({
+        isPrivate,
+        isOnboardingCompleted: true,
+      });
+
+      addToast({
+        title: "Success",
+        color: "success",
+        description: "Photos uploaded successfully",
+      });
 
       router.push(routes.onboarding.family);
     } catch (error) {
       console.log(error);
     } finally {
       setLoading(false);
+      setUploading(false);
     }
   };
 
@@ -124,28 +163,43 @@ const page = () => {
         >
           <OnboardingHeader step={4} />
 
-          {loading ? (
-            <div className="mt-10">
-              <PhotoGridSkeleton count={4} />
-            </div>
-          ) : (
-            <div className="text-left mt-10">
+          <div className="text-left mt-10">
+              {/* Profile photo (single, required) */}
+              <h3 className="text-sm font-semibold text-slate-700 mb-3">
+                Profile Photo
+              </h3>
               <div className="grid gap-6 grid-cols-2 md:grid-cols-4 w-full mb-6">
-                {photos?.map((photo, i) => (
+                {profilePhoto ? (
+                  <PhotoGridCard
+                    onRemove={handleRemoveProfile}
+                    url={previewUrl(profilePhoto)}
+                    uploading={uploading && !profilePhoto._id}
+                  />
+                ) : (
+                  <div className="col-span-2 md:col-span-4">
+                    <PhotoUploader onChange={handleProfileSelect} />
+                  </div>
+                )}
+              </div>
+
+              {/* Other photos (gallery, optional) */}
+              <h3 className="text-sm font-semibold text-slate-700 mb-3">
+                Other Photos
+              </h3>
+              <div className="grid gap-6 grid-cols-2 md:grid-cols-4 w-full mb-6">
+                {otherPhotos?.map((photo, i) => (
                   <PhotoGridCard
                     key={i}
-                    onRemove={() => handleRemove(photo, i)}
-                    url={
-                      photo._id
-                        ? photo.url
-                        : URL.createObjectURL(photo.url as any)
-                    }
+                    onRemove={() => handleRemoveOther(photo, i)}
+                    url={previewUrl(photo)}
+                    pending={photo.status === AttachmentStatus.pending}
+                    uploading={uploading && !photo._id}
                   />
                 ))}
               </div>
 
-              {photos?.length < 5 && (
-                <PhotoUploader onChange={handlePhotoSelect} />
+              {otherPhotos?.length < MAX_OTHER_PHOTOS && (
+                <PhotoUploader multiple onChangeMultiple={handleOtherSelect} />
               )}
 
               <Alert
@@ -153,10 +207,10 @@ const page = () => {
                 variant="flat"
                 title="Profile Photo Tip"
                 className="items-start mt-3"
-                description="The first photo in your list will be your main profile photo."
+                description="Your profile photo is the main picture shown across the app. Other photos give matches a fuller picture of you."
               />
 
-              {photos?.length > 0 && (
+              {profilePhoto && (
                 <div className="mt-8 p-4 border border-gray-100 rounded-xl bg-gray-50/50">
                   <Switch
                     isSelected={isPrivate}
@@ -166,12 +220,10 @@ const page = () => {
                         "inline-flex flex-row-reverse w-full max-w-full items-center",
                         "justify-between cursor-pointer rounded-lg gap-2 border-2 border-transparent",
                       ),
-                      wrapper: "p-0 h-4 overflow-visible",
+                      wrapper: "h-7 w-[52px] p-1 overflow-visible",
                       thumb: clsx(
-                        "w-6 h-6 border-2 shadow-lg",
+                        "w-5 h-5 shadow-md",
                         "group-data-[selected=true]:ml-6",
-                        "group-data-[selected=true]:border-primary",
-                        "group-data-[selected=false]:border-default-300",
                       ),
                     }}
                   >
@@ -188,7 +240,7 @@ const page = () => {
                 </div>
               )}
 
-              {photos?.length > 0 && (
+              {profilePhoto && (
                 <OnboardingContinueButton
                   title="UPLOAD YOUR PHOTOS"
                   onPress={handleUpload}
@@ -196,8 +248,7 @@ const page = () => {
                   className="mt-5"
                 />
               )}
-            </div>
-          )}
+          </div>
         </Card>
       </div>
     </div>

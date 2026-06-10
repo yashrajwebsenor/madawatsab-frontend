@@ -28,7 +28,7 @@ const MyProfileDetailsCard = () => {
           <div className="relative">
             <div className="p-1.5 bg-white/10 backdrop-blur-md rounded-[32px] border border-white/20">
               <Avatar
-                src={user.photos?.[0]?.url}
+                src={user.profilePhoto?.url}
                 className="w-32 h-32 text-large bg-[#f8fafc] rounded-[28px] border-4 border-white"
                 fallback={<LuUser className="w-16 h-16 text-default-300" />}
               />

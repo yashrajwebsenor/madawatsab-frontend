@@ -256,6 +256,7 @@ const page = () => {
                       label="COUNTRY"
                       labelPlacement="outside"
                       placeholder="Select Country"
+                      inputProps={{ autoComplete: "new-password" }}
                       isInvalid={!!errors.country}
                       errorMessage={errors.country?.message}
                       selectedKey={field.value ? String(field.value) : ""}
@@ -284,6 +285,7 @@ const page = () => {
                       label="STATE/PROVINCE"
                       labelPlacement="outside"
                       placeholder="Select State"
+                      inputProps={{ autoComplete: "new-password" }}
                       isInvalid={!!errors.state}
                       errorMessage={errors.state?.message}
                       selectedKey={field.value ?? ""}
@@ -310,6 +312,7 @@ const page = () => {
                       label="CITY"
                       labelPlacement="outside"
                       placeholder="Select City"
+                      inputProps={{ autoComplete: "new-password" }}
                       isInvalid={!!errors.city}
                       errorMessage={errors.city?.message}
                       selectedKey={field.value ?? ""}

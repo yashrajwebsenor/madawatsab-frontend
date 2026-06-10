@@ -112,3 +112,24 @@ export const helpSupportSchema: any = yup.object({
   description: yup.string().trim().required("Description is required"),
   type: yup.string().required("Support type is required"),
 });
+
+// All religious / lifestyle fields are optional — users fill what they want.
+export const religiousDetailsSchema: any = yup.object({
+  offerNamaz: yup.string().optional(),
+  reciteQuran: yup.string().optional(),
+  keepRoza: yup.string().optional(),
+  giveZakat: yup.string().optional(),
+  performedHajjUmrah: yup.string().optional(),
+  wearHijab: yup.string().optional(),
+});
+
+export const lifestyleDetailsSchema: any = yup.object({
+  dietPreference: yup.string().optional(),
+  languagesKnown: yup.array().of(yup.string()).optional(),
+  smoke: yup.string().optional(),
+  drink: yup.string().optional(),
+  cookFood: yup.string().optional(),
+  sports: yup.array().of(yup.string()).optional(),
+  hobbies: yup.array().of(yup.string()).optional(),
+  musics: yup.array().of(yup.string()).optional(),
+});

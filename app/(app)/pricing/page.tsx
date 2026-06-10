@@ -134,7 +134,7 @@ const page = () => {
         name: APP_CONFIG.APP_NAME,
         key: APP_CONFIG.RAZORPAY_KEY_ID,
         description: `${plan.name} Plan`,
-        image: user?.photos?.[0]?.url || "/assets/images/logo.png",
+        image: user?.profilePhoto?.url || "/assets/images/logo.png",
         prefill: {
           name: user?.fullName || "",
           phone: user?.mobile || "",

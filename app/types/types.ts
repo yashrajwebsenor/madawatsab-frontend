@@ -1,10 +1,15 @@
 import {
+  AttachmentStatus,
   AttachmentTypes,
+  DietPreference,
   HelpSupportStatus,
   InterestStatus,
   MessageTypes,
   PlanDurationTypes,
   ProfileFor,
+  ReligiousFrequency,
+  YesNo,
+  YesNoSometimes,
 } from "./enum";
 
 export interface User {
@@ -31,9 +36,16 @@ export interface User {
   sect: string;
   workSector: string;
   occupation: string;
+  profilePhoto?: Photo;
   photos: Photo[];
   isEntryFeePaid: boolean;
+  // Permanent app-access flag (paid entry fee OR entered while fee disabled).
+  // The entry gate checks this, not isEntryFeePaid.
+  hasAppAccess: boolean;
   spinReward: string;
+  // Permanent spin-step-resolved flag (spun, skipped, or waived while disabled).
+  // The spin gate checks this, not spinReward.
+  spinResolved: boolean;
   address: Address;
   family: Family | null;
   assignedAgent: string | null;
@@ -44,6 +56,24 @@ export interface User {
   contactViewBalance?: number;
   contactViewLifetime?: number;
   subscription: Subscription;
+
+  // ---- Religious practice (optional, edited from My Profile) ----
+  offerNamaz?: ReligiousFrequency;
+  reciteQuran?: ReligiousFrequency;
+  keepRoza?: YesNo;
+  giveZakat?: ReligiousFrequency;
+  performedHajjUmrah?: YesNo;
+  wearHijab?: YesNoSometimes;
+
+  // ---- Lifestyle & interests (optional, edited from My Profile) ----
+  dietPreference?: DietPreference;
+  languagesKnown?: string[];
+  smoke?: YesNo;
+  drink?: YesNo;
+  cookFood?: YesNoSometimes;
+  sports?: string[];
+  hobbies?: string[];
+  musics?: string[];
 }
 
 export interface SubscriptionCapabilities {
@@ -90,6 +120,7 @@ export interface Photo {
   _id: string;
   url: string;
   type?: AttachmentTypes;
+  status?: AttachmentStatus;
 }
 
 export interface DialogProps {
@@ -180,6 +211,7 @@ export interface ChatRoom {
 export interface ChatRoomParticipant {
   _id: string;
   fullName: string;
+  profilePhoto?: Photo;
   photos: Photo[];
   occupation: string;
   isPrivate?: boolean;

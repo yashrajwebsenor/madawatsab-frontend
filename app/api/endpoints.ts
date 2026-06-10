@@ -8,6 +8,7 @@ const ENDPOINTS = {
     GET: "/profile",
     UPDATE: "/profile",
     SPIN_WHEEL: "/profile/spin-wheel",
+    UPLOAD_PROFILE_PHOTO: "/profile/upload-profile-photo",
     UPLOAD_PHOTO: "/profile/upload-photo",
     UPLOAD_MULTIPLE_PHOTOS: "/profile/upload-multiple-photos",
     DELETE_PHOTO: (id: string) => `/profile/delete-photo/${id}`,

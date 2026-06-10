@@ -4,9 +4,11 @@ import { LuCloudUpload } from "react-icons/lu";
 
 type Props = {
   onChange?: (file: File) => void;
+  onChangeMultiple?: (files: File[]) => void;
+  multiple?: boolean;
 };
 
-const PhotoUploader = ({ onChange }: Props) => {
+const PhotoUploader = ({ onChange, onChangeMultiple, multiple }: Props) => {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -19,21 +21,26 @@ const PhotoUploader = ({ onChange }: Props) => {
     setIsDragging(false);
   };
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
+  const emitFiles = (fileList: FileList | null) => {
+    const files = Array.from(fileList ?? []);
+    if (!files.length) return;
 
-    const file = e.dataTransfer.files?.[0];
-    if (file && onChange) {
-      onChange(file);
+    if (multiple) {
+      onChangeMultiple?.(files);
+    } else if (onChange) {
+      onChange(files[0]);
     }
   };
 
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    emitFiles(e.dataTransfer.files);
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && onChange) {
-      onChange(file);
-    }
+    emitFiles(e.target.files);
+    e.target.value = "";
   };
 
   const onBrowseClick = () => {
@@ -60,6 +67,7 @@ const PhotoUploader = ({ onChange }: Props) => {
         ref={fileInputRef}
         onChange={handleFileChange}
         accept="image/*"
+        multiple={multiple}
       />
 
       <div className="flex items-center justify-center w-16 h-16 mb-4 rounded-full bg-indigo-50 text-indigo-500">

@@ -9,13 +9,17 @@ import api from "../api/api";
 import { Match } from "../types/types";
 import { MatchGridSkeleton } from "../components/shared/Skeletons";
 import AdvertisementCard from "../components/cards/AdvertisementCard";
-import { useCallback, useMemo, useRef } from "react";
+
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Spinner } from "@heroui/react";
+import { Spinner, Tab, Tabs } from "@heroui/react";
+
+type DiscoverTab = "discover" | "online";
 
 const page = () => {
   const searchParams = useSearchParams();
   const filters = Object.fromEntries(searchParams.entries());
+  const [tab, setTab] = useState<DiscoverTab>("discover");
 
   const {
     data,
@@ -25,7 +29,9 @@ const page = () => {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ["discover", filters],
+    // tab is part of the key so each tab keeps its own snapshot and refetches
+    // when switched — the Online list is intentionally not live-updated.
+    queryKey: ["discover", tab, filters],
     initialPageParam: 1,
     queryFn: async ({ pageParam }) => {
       const res: any = await api.get(ENDPOINTS.PROFILE.DISCOVER, {
@@ -33,6 +39,7 @@ const page = () => {
           page: pageParam,
           limit: 10,
           ...filters,
+          ...(tab === "online" ? { online: "true" } : {}),
         },
       });
       return {
@@ -91,9 +98,22 @@ const page = () => {
         <FilterSection />
 
         <div className="flex-1">
+          <Tabs
+            aria-label="Discover sections"
+            color="primary"
+            radius="full"
+            selectedKey={tab}
+            onSelectionChange={(key) => setTab(key as DiscoverTab)}
+            className="mb-4"
+          >
+            <Tab key="discover" title="Discover" />
+            <Tab key="online" title="Online" />
+          </Tabs>
+
           {matches?.length > 0 && (
             <p className="mb-3 text-sm text-gray-700">
-              Showing <b>{totalProfiles}</b> matches
+              Showing <b>{totalProfiles}</b>{" "}
+              {tab === "online" ? "online" : "matches"}
             </p>
           )}
 
@@ -123,7 +143,11 @@ const page = () => {
               })}
             </div>
           ) : (
-            <p className="text-center">No matches found.</p>
+            <p className="text-center">
+              {tab === "online"
+                ? "No users online right now."
+                : "No matches found."}
+            </p>
           )}
 
           {isFetchingNextPage && (

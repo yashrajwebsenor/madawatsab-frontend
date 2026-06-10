@@ -69,9 +69,15 @@ export enum InterestStatus {
 export enum AttachmentTypes {
   ad_video = "ad_video",
   ad_banner = "ad_banner",
+  profile_picture = "profile_picture",
   profile_photo = "profile_photo",
   chat_image = "chat_image",
   chat_video = "chat_video",
+}
+
+export enum AttachmentStatus {
+  pending = "pending",
+  approved = "approved",
 }
 
 export enum MetadataTypes {
@@ -86,4 +92,30 @@ export enum MessageTypes {
   text = "text",
   image = "image",
   video = "video",
+}
+
+// Practice frequency for religious habits (namaz, quran recitation, zakat).
+export enum ReligiousFrequency {
+  during_ramadan = "during_ramadan",
+  regularly = "regularly",
+  sometimes = "sometimes",
+  never = "never",
+}
+
+// Simple yes/no answers (roza, hajj/umrah, smoke, drink).
+export enum YesNo {
+  yes = "yes",
+  no = "no",
+}
+
+// Yes/no with a partial option (hijab, cooking).
+export enum YesNoSometimes {
+  yes = "yes",
+  no = "no",
+  sometimes = "sometimes",
+}
+
+export enum DietPreference {
+  vegetarian = "vegetarian",
+  non_vegetarian = "non_vegetarian",
 }

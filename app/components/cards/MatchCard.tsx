@@ -45,7 +45,7 @@ const MatchCard = ({
   const {
     _id,
     userId,
-    photos,
+    profilePhoto,
     fullName,
     occupation,
     dob,
@@ -124,7 +124,7 @@ const MatchCard = ({
           alt={fullName}
           width={"100%"}
           isZoomed={!blurred}
-          src={photos?.[0]?.url}
+          src={profilePhoto?.url}
           className={clsx("object-cover", { "blur-[6px]": blurred })}
         />
         {isPrivate && <PrivateBadge />}

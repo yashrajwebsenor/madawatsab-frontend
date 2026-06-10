@@ -139,9 +139,9 @@ const MatchProfileSection = ({
         <Image
           removeWrapper
           alt={profile.fullName}
-          src={profile?.photos?.[0]?.url}
+          src={profile?.profilePhoto?.url}
           className={clsx("w-full h-[400px] md:h-full md:min-h-full object-cover rounded-none", {
-            "blur-[2px]": blurred,
+            "blur-[6px]": blurred,
           })}
         />
         {profile.isPrivate ? (

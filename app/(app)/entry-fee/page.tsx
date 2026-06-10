@@ -25,12 +25,15 @@ const page = () => {
   const { getMyProfile } = useProfile();
   const [loading, setLoading] = useState(false);
   const amount = Number(config?.appEntryFee ?? 0);
+  const entryFeeEnabled = config?.entryFeeEnabled !== "false";
 
   useEffect(() => {
-    if (user?.isEntryFeePaid) {
+    // Leave the paywall if the user already has access, or the admin turned the
+    // entry fee off (free entry).
+    if (user?.hasAppAccess || !entryFeeEnabled) {
       router.push(routes.home);
     }
-  }, [user?.isEntryFeePaid]);
+  }, [user?.hasAppAccess, entryFeeEnabled]);
 
   const handleCreateOrder = async () => {
     if (amount < 1) {
@@ -58,7 +61,7 @@ const page = () => {
         name: APP_CONFIG.APP_NAME,
         key: APP_CONFIG.RAZORPAY_KEY_ID,
         description: "Platform Entry Fee",
-        image: user?.photos?.[0]?.url || "/assets/images/logo.png",
+        image: user?.profilePhoto?.url || "/assets/images/logo.png",
         prefill: {
           name: user?.fullName || "",
           phone: user?.mobile || "",

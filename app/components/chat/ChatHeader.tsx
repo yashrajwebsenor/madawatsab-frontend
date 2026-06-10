@@ -15,7 +15,7 @@ const ChatHeader = ({ roomId }: { roomId: string }) => {
           isBordered
           color="primary"
           name={pariticipant?.fullName}
-          src={pariticipant?.photos?.[0]?.url}
+          src={pariticipant?.profilePhoto?.url}
           className={clsx(
             "w-8 h-8 text-large ring-2 ring-offset-2 ring-transparent group-hover:ring-primary/20 transition-all",
             { "blur-[2px]": pariticipant?.shouldBlur ?? pariticipant?.isPrivate },

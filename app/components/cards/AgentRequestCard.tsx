@@ -38,7 +38,7 @@ const AgentRequestCard = ({ agent, refetch }: Props) => {
       <CardBody className="p-5">
         <div className="flex items-start gap-4">
           <Avatar
-            src={agent.photos?.[0]?.url}
+            src={agent.profilePhoto?.url}
             name={agent.fullName}
             className="w-14 h-14 text-lg border-2 border-primary/20 shadow-inner"
             isBordered
