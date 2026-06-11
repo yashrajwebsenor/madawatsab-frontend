@@ -2,6 +2,7 @@ import {
   AttachmentStatus,
   AttachmentTypes,
   DietPreference,
+  GalleryRequestStatus,
   HelpSupportStatus,
   InterestStatus,
   MessageTypes,
@@ -165,6 +166,12 @@ export type ProfileMatch = User & {
   cardType: "profile";
   isInterestSent: boolean;
   isInterestReceived: boolean;
+  // Pending interest ids — present only while the request is pending, so the
+  // detail page can cancel (sent) or accept/decline (received).
+  sentInterestId?: string | null;
+  receivedInterestId?: string | null;
+  // My gallery request to this (private) profile — null when never requested.
+  galleryRequestStatus?: GalleryRequestStatus | null;
 };
 
 export type Match = ProfileMatch | (Advertisement & { cardType: "ad" });
@@ -186,6 +193,41 @@ export interface Interest {
   senderId: User;
   receiverId: User;
   status: InterestStatus;
+}
+
+// A contact-unlock record (`contact_views`). Only the side requested via the
+// list `type` param comes back populated as a User; the other stays an id.
+export interface ContactView {
+  _id: string;
+  viewerId: User;
+  profileId: User;
+  createdAt: string;
+}
+
+// A private bookmark (`shortlists`): the current user shortlisted `targetId`.
+export interface Shortlist {
+  _id: string;
+  targetId: User;
+  createdAt: string;
+}
+
+// A profile-page visit (`profile_visits`). Only the side requested via the
+// list `type` param comes back populated as a User; the other stays an id.
+export interface ProfileVisit {
+  _id: string;
+  visitorId: User;
+  visitedId: User;
+  createdAt: string;
+}
+
+// A gallery (photo-access) request row, already transformed by the backend:
+// `profile` is the other side of the request.
+export interface GalleryRequestItem {
+  _id: string;
+  status: GalleryRequestStatus;
+  createdAt: string;
+  updatedAt: string;
+  profile: User;
 }
 
 export interface ConnectionProfileItem {

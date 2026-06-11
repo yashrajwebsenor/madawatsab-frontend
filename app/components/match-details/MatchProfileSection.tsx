@@ -2,6 +2,7 @@ import api from "@/app/api/api";
 import ENDPOINTS from "@/app/api/endpoints";
 import routes from "@/app/configs/route-paths";
 import useProfile from "@/app/hooks/useProfile";
+import useShortlist from "@/app/hooks/useShortlist";
 import useSubscriptionAccess from "@/app/hooks/useSubscriptionAccess";
 import { ProfileMatch, User } from "@/app/types/types";
 import CommonUtils from "@/app/utils/common.utils";
@@ -14,15 +15,20 @@ import {
   ModalContent,
   ModalFooter,
   ModalHeader,
+  Skeleton,
   useDisclosure,
 } from "@heroui/react";
 import clsx from "clsx";
 import dayjs from "dayjs";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { IoIosLock } from "react-icons/io";
+import { IoIosLock, IoMdClose } from "react-icons/io";
 import {
+  IoBookmark,
+  IoBookmarkOutline,
   IoCallOutline,
+  IoCheckmark,
+  IoImagesOutline,
   IoLanguageOutline,
   IoMailOutline,
   IoSchoolOutline,
@@ -30,6 +36,7 @@ import {
 import { MdOutlineWorkOutline, MdVerified } from "react-icons/md";
 import { TiHeartFullOutline } from "react-icons/ti";
 import PrivateBadge from "../shared/PrivateBadge";
+import { GalleryRequestStatus } from "@/app/types/enum";
 
 type RevealedContact = { mobile?: string; email?: string } | null;
 
@@ -42,7 +49,10 @@ const MatchProfileSection = ({
 }) => {
   const router = useRouter();
   const { getMyProfile } = useProfile();
-  const { hasContactCredits, contactViewBalance } = useSubscriptionAccess();
+  const { hasActivePlan, hasContactCredits, contactViewBalance } =
+    useSubscriptionAccess();
+  const { isShortlisted, toggleShortlist } = useShortlist();
+  const shortlisted = isShortlisted(profile._id);
 
   const age = dayjs().diff(dayjs(profile?.dob), "years");
   const blurred = profile?.shouldBlur ?? profile?.isPrivate;
@@ -50,11 +60,52 @@ const MatchProfileSection = ({
   const subscriptionLocked = !!profile?.shouldBlur && !profile?.isPrivate;
 
   const [contact, setContact] = useState<RevealedContact>(null);
+  // True while the initial already-unlocked check runs — render a placeholder
+  // instead of flashing the reveal button for contacts that are unlocked.
+  const [checkingStatus, setCheckingStatus] = useState(true);
   const [revealing, setRevealing] = useState(false);
   const [sendingInterest, setSendingInterest] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  // Which respond action is in-flight, so both buttons stay mounted and only
+  // the pressed one spins.
+  const [respondingTo, setRespondingTo] = useState<
+    "accepted" | "declined" | null
+  >(null);
 
   const isInterestSent = (profile as ProfileMatch)?.isInterestSent;
   const isInterestReceived = (profile as ProfileMatch)?.isInterestReceived;
+  const sentInterestId = (profile as ProfileMatch)?.sentInterestId;
+  const receivedInterestId = (profile as ProfileMatch)?.receivedInterestId;
+  const galleryRequestStatus = (profile as ProfileMatch)?.galleryRequestStatus;
+
+  const [requestingPhotos, setRequestingPhotos] = useState(false);
+
+  // Ask a private profile for photo access. Subscribers only — the button is
+  // hidden otherwise, and the backend enforces it regardless.
+  const handleRequestPhotos = async () => {
+    try {
+      setRequestingPhotos(true);
+      await api.post(ENDPOINTS.GALLERY_REQUESTS.SEND, {
+        receiverId: profile._id,
+      });
+      addToast({
+        color: "success",
+        title: "Request Sent",
+        description: "Photo request sent successfully",
+      });
+      refetch?.();
+    } catch (error: any) {
+      addToast({
+        color: "danger",
+        title: "Could not send request",
+        description:
+          error?.response?.data?.message ||
+          "Something went wrong. Please try again.",
+      });
+    } finally {
+      setRequestingPhotos(false);
+    }
+  };
 
   const handleSendInterest = async () => {
     try {
@@ -78,6 +129,56 @@ const MatchProfileSection = ({
       setSendingInterest(false);
     }
   };
+
+  const handleRespond = async (status: "accepted" | "declined") => {
+    if (!receivedInterestId) return;
+    try {
+      setRespondingTo(status);
+      await api.patch(ENDPOINTS.INTERESTS.RESPOND(receivedInterestId), {
+        status,
+      });
+      addToast({
+        color: "success",
+        title: `Interest ${status}`,
+        description: `Interest ${status} successfully`,
+      });
+      refetch?.();
+    } catch (error: any) {
+      addToast({
+        color: "danger",
+        title: "Could not respond",
+        description:
+          error?.response?.data?.message ||
+          "Something went wrong. Please try again.",
+      });
+    } finally {
+      setRespondingTo(null);
+    }
+  };
+
+  const handleCancelInterest = async () => {
+    if (!sentInterestId) return;
+    try {
+      setCancelling(true);
+      await api.delete(ENDPOINTS.INTERESTS.CANCEL(sentInterestId));
+      addToast({
+        color: "success",
+        title: "Interest Cancelled",
+        description: "Interest request cancelled",
+      });
+      refetch?.();
+    } catch (error: any) {
+      addToast({
+        color: "danger",
+        title: "Could not cancel interest",
+        description:
+          error?.response?.data?.message ||
+          "Something went wrong. Please try again.",
+      });
+    } finally {
+      setCancelling(false);
+    }
+  };
   const {
     isOpen: isConfirmOpen,
     onOpen: onConfirmOpen,
@@ -98,6 +199,8 @@ const MatchProfileSection = ({
         }
       } catch {
         // Non-blocking: reveal button stays available on failure.
+      } finally {
+        if (active) setCheckingStatus(false);
       }
     })();
     return () => {
@@ -145,7 +248,8 @@ const MatchProfileSection = ({
           })}
         />
         {profile.isPrivate ? (
-          <PrivateBadge />
+          // Hidden once a gallery grant unblurs this private profile.
+          blurred && <PrivateBadge />
         ) : (
           subscriptionLocked && (
             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/20 text-white">
@@ -157,6 +261,35 @@ const MatchProfileSection = ({
               </p>
             </div>
           )
+        )}
+        {/* Gallery request — private targets, subscribed viewers, no grant yet.
+            z-20 sits above the PrivateBadge overlay. */}
+        {profile.isPrivate && blurred && hasActivePlan && (
+          <div className="absolute inset-x-4 bottom-4 z-20">
+            {galleryRequestStatus === GalleryRequestStatus.pending ? (
+              <Button
+                fullWidth
+                size="sm"
+                isDisabled
+                className="bg-white/90 font-semibold"
+                startContent={<IoImagesOutline size={16} />}
+              >
+                Photo Request Sent
+              </Button>
+            ) : (
+              <Button
+                fullWidth
+                size="sm"
+                color="primary"
+                className="font-semibold"
+                isLoading={requestingPhotos}
+                onPress={handleRequestPhotos}
+                startContent={!requestingPhotos && <IoImagesOutline size={16} />}
+              >
+                Request Photos
+              </Button>
+            )}
+          </div>
         )}
       </div>
 
@@ -174,6 +307,19 @@ const MatchProfileSection = ({
               {profile?.address?.countryName}
             </p>
           </div>
+          <Button
+            isIconOnly
+            radius="full"
+            variant="flat"
+            onPress={() => toggleShortlist(profile._id)}
+            aria-label={shortlisted ? "Remove from shortlist" : "Shortlist"}
+          >
+            {shortlisted ? (
+              <IoBookmark size={18} className="text-primary" />
+            ) : (
+              <IoBookmarkOutline size={18} className="text-gray-600" />
+            )}
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -230,9 +376,78 @@ const MatchProfileSection = ({
           )}
         </div>
 
-        {/* Send interest — sits in the gap above contact details. */}
+        {/* Interest actions — sit in the gap above contact details. */}
         <div className="mt-2">
-          {isInterestSent ? (
+          {receivedInterestId ? (
+            // They sent us a pending interest: accept or decline.
+            <div className="rounded-2xl border border-success/20 bg-success/5 p-3">
+              <div className="flex items-center gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-success/15 text-success">
+                  <TiHeartFullOutline size={18} />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-gray-900">
+                    Interested in You
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Accept to start a conversation
+                  </p>
+                </div>
+              </div>
+              <div className="mt-3 flex gap-2">
+                <Button
+                  fullWidth
+                  variant="bordered"
+                  color="danger"
+                  isLoading={respondingTo === "declined"}
+                  isDisabled={respondingTo !== null}
+                  onPress={() => handleRespond("declined")}
+                  startContent={
+                    respondingTo !== "declined" && <IoMdClose size={18} />
+                  }
+                >
+                  Reject
+                </Button>
+                <Button
+                  fullWidth
+                  color="success"
+                  className="font-semibold text-white"
+                  isLoading={respondingTo === "accepted"}
+                  isDisabled={respondingTo !== null}
+                  onPress={() => handleRespond("accepted")}
+                  startContent={
+                    respondingTo !== "accepted" && <IoCheckmark size={18} />
+                  }
+                >
+                  Accept
+                </Button>
+              </div>
+            </div>
+          ) : sentInterestId ? (
+            // We sent a pending interest: allow cancelling it inline.
+            <div className="flex items-center gap-3 rounded-2xl border border-success/20 bg-success/5 p-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-success/15 text-success">
+                <TiHeartFullOutline size={18} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-gray-900">
+                  Interest Sent
+                </p>
+                <p className="text-xs text-gray-500">Awaiting their response</p>
+              </div>
+              <Button
+                size="sm"
+                variant="light"
+                color="danger"
+                className="font-medium"
+                isLoading={cancelling}
+                onPress={handleCancelInterest}
+                startContent={!cancelling && <IoMdClose size={16} />}
+              >
+                Cancel
+              </Button>
+            </div>
+          ) : isInterestSent ? (
             <div className="flex items-center justify-center gap-2 w-full rounded-xl bg-success/10 text-success py-3 text-sm font-semibold">
               <TiHeartFullOutline size={18} />
               Interest Sent
@@ -258,7 +473,12 @@ const MatchProfileSection = ({
 
         {/* Contact reveal — spends one wallet credit on first unlock. */}
         <div className="mt-auto pt-4 border-t border-gray-100">
-          {contact ? (
+          {checkingStatus ? (
+            <div className="flex flex-col gap-2">
+              <Skeleton className="h-10 w-full rounded-xl" />
+              <Skeleton className="h-3 w-48 rounded-md" />
+            </div>
+          ) : contact ? (
             <div className="flex flex-col gap-2">
               <p className="text-[10px] font-bold text-primary uppercase tracking-wider">
                 Contact Details

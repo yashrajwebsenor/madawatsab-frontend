@@ -10,13 +10,22 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { IoMdClose } from "react-icons/io";
-import { IoLocationOutline } from "react-icons/io5";
+import {
+  IoBookmark,
+  IoBookmarkOutline,
+  IoChatbubbleEllipsesOutline,
+  IoLocationOutline,
+} from "react-icons/io5";
 import { TiHeartFullOutline } from "react-icons/ti";
 import PrivateBadge from "../shared/PrivateBadge";
 import { InterestStatus } from "@/app/types/enum";
+import useShortlist from "@/app/hooks/useShortlist";
 
 type Props = {
   interestId?: string;
+  // When set, Accept/Decline responds to this gallery request instead of an
+  // interest (Gallery Requests tab).
+  galleryRequestId?: string;
   refetch?: () => void;
   // Discovery sends a ProfileMatch (with interest flags); connections send a
   // plain User. Accept both — the interest flags are read optionally.
@@ -24,15 +33,19 @@ type Props = {
   canAcceptDecline?: boolean;
   interestStatus?: InterestStatus;
   canInterestSendReceive?: boolean;
+  // Profile Visits footer: Shortlist + Message instead of interest actions.
+  canShortlistMessage?: boolean;
 };
 
 const MatchCard = ({
   profile,
   refetch,
   interestId,
+  galleryRequestId,
   interestStatus,
   canAcceptDecline,
   canInterestSendReceive,
+  canShortlistMessage,
 }: Props) => {
   const [loading, setLoading] = useState(false);
   // Which respond action is in-flight, so we can keep both buttons mounted
@@ -67,6 +80,17 @@ const MatchCard = ({
     router.push(routes.matches.details(_id!));
   };
 
+  const handleMessage = () => {
+    router.push(routes.message.index);
+  };
+
+  const { isShortlisted, toggleShortlist } = useShortlist();
+  const shortlisted = isShortlisted(_id);
+
+  const handleShortlist = () => {
+    if (_id) toggleShortlist(_id);
+  };
+
   const handleSendInterest = async () => {
     try {
       setLoading(true);
@@ -87,20 +111,24 @@ const MatchCard = ({
   };
 
   const handleAcceptDecline = async (status: "accepted" | "declined") => {
+    const isGallery = !!galleryRequestId;
     try {
       setRespondingTo(status);
-      await api.patch(ENDPOINTS.INTERESTS.RESPOND(interestId!), {
-        status,
-      });
+      await api.patch(
+        isGallery
+          ? ENDPOINTS.GALLERY_REQUESTS.RESPOND(galleryRequestId!)
+          : ENDPOINTS.INTERESTS.RESPOND(interestId!),
+        { status },
+      );
       addToast({
         color: "success",
-        title: `Interest ${status}`,
-        description: `Interest ${status} successfully`,
+        title: `${isGallery ? "Request" : "Interest"} ${status}`,
+        description: `${isGallery ? "Gallery request" : "Interest"} ${status} successfully`,
       });
       refetch?.();
-      // Accepting creates a connection — refresh the Connections tab too so it
-      // appears without a manual page reload.
-      if (status === "accepted") {
+      // Accepting an interest creates a connection — refresh the Connections
+      // tab too so it appears without a manual page reload.
+      if (!isGallery && status === "accepted") {
         queryClient.invalidateQueries({ queryKey: ["connections"] });
       }
     } catch (error) {
@@ -127,7 +155,24 @@ const MatchCard = ({
           src={profilePhoto?.url}
           className={clsx("object-cover", { "blur-[6px]": blurred })}
         />
-        {isPrivate && <PrivateBadge />}
+        {/* Hide the badge once a gallery grant unblurs this private profile. */}
+        {isPrivate && blurred && <PrivateBadge />}
+        {/* z-20 keeps the bookmark clickable above the PrivateBadge overlay. */}
+        <Button
+          isIconOnly
+          size="sm"
+          radius="full"
+          variant="flat"
+          onPress={handleShortlist}
+          aria-label={shortlisted ? "Remove from shortlist" : "Shortlist"}
+          className="absolute right-2 top-2 z-20 bg-white/80 backdrop-blur-sm"
+        >
+          {shortlisted ? (
+            <IoBookmark className="text-primary" />
+          ) : (
+            <IoBookmarkOutline className="text-gray-600" />
+          )}
+        </Button>
       </div>
 
       <div className="p-3 text-sm">
@@ -228,6 +273,32 @@ const MatchCard = ({
               }
             >
               Accept Request
+            </Button>
+          </div>
+        )}
+
+        {canShortlistMessage && (
+          <div className="mt-5 flex gap-3">
+            <Button
+              fullWidth
+              size="sm"
+              variant={shortlisted ? "flat" : "bordered"}
+              color={shortlisted ? "primary" : "default"}
+              onPress={handleShortlist}
+              startContent={
+                shortlisted ? <IoBookmark /> : <IoBookmarkOutline />
+              }
+            >
+              {shortlisted ? "Shortlisted" : "Shortlist"}
+            </Button>
+            <Button
+              fullWidth
+              size="sm"
+              color="primary"
+              onPress={handleMessage}
+              startContent={<IoChatbubbleEllipsesOutline />}
+            >
+              Message
             </Button>
           </div>
         )}

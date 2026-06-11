@@ -1,10 +1,11 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import useUserStore from "../store/useUserStore";
 import useConfigStore from "../store/useConfigStore";
 import routes from "../configs/route-paths";
+import resolveGateRoute from "../utils/gate.utils";
 import MainHeader from "../components/layouts/MainHeader";
 import useFirebase from "../hooks/useFirebase";
 import useChatRooms from "../hooks/useChatRooms";
@@ -14,18 +15,20 @@ import socketService from "../socket";
 
 const layout = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
-  const pathname = usePathname();
   const { user } = useUserStore();
   const { config } = useConfigStore();
   const { initFirebase } = useFirebase();
 
-  // Admin toggles. A missing/unloaded config defaults to enabled (gate on).
-  const entryFeeEnabled = config?.entryFeeEnabled !== "false";
-  const spinWheelEnabled = config?.spinWheelEnabled !== "false";
+  // Entry-fee / spin-wheel gates. The gate pages themselves live in the
+  // (gate) group (bare shell), so when a gate is pending this layout's only
+  // job is to redirect — it must NOT mount the app services below: their APIs
+  // sit behind AppAccessGuard and would 403 with error toasts.
+  const nextGate = resolveGateRoute(user, config);
+  const isGateBlocked = !user?.isOnboardingCompleted || nextGate !== routes.home;
 
   // Load chat rooms app-wide so the navbar unread badge is accurate on every
   // page (the store keeps the counts live via socket events).
-  useChatRooms();
+  useChatRooms({ enabled: !isGateBlocked });
 
   useEffect(() => {
     if (!user?.isOnboardingCompleted) {
@@ -33,21 +36,8 @@ const layout = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
-    // Entry gate: only when the fee is enabled AND the user hasn't been granted
-    // access (paid or waived). Users who already have access are never sent back.
-    if (entryFeeEnabled && !user?.hasAppAccess && pathname !== routes.entryFee) {
-      router.push(routes.entryFee);
-      return;
-    }
-
-    // Spin gate: shown after entry, only when enabled AND not yet resolved.
-    if (
-      spinWheelEnabled &&
-      user?.hasAppAccess &&
-      !user?.spinResolved &&
-      pathname !== routes.spinReward
-    ) {
-      router.push(routes.spinReward);
+    if (nextGate !== routes.home) {
+      router.push(nextGate);
       return;
     }
 
@@ -61,13 +51,15 @@ const layout = ({ children }: { children: React.ReactNode }) => {
     if (user?._id) {
       socketService.connect(user._id);
     }
-  }, [user, router, pathname]);
+  }, [user, router, nextGate]);
+
+  // While redirecting to onboarding or a gate page, render nothing so app
+  // pages (discover, chat, ...) never fire their guarded API calls.
+  if (isGateBlocked) return null;
 
   return (
     <div className="min-h-screen w-full flex flex-col">
-      {pathname !== routes.entryFee && pathname !== routes.spinReward && (
-        <MainHeader />
-      )}
+      <MainHeader />
       <main className="flex-1 grid grid-cols-1">{children}</main>
       <ChatSocketListener />
       <NotificationBar />

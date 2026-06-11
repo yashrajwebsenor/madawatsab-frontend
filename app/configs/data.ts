@@ -162,6 +162,7 @@ export const spinWheelData = [
 export const navigations = [
   { href: routes.home, title: "Discover" },
   { href: routes.matches.list, title: "Matches" },
+  { href: routes.activity, title: "Activity" },
   { href: routes.message.index, title: "Message" },
   { href: routes.pricing, title: "Pricing" },
 ];

@@ -8,6 +8,7 @@ const ENDPOINTS = {
     GET: "/profile",
     UPDATE: "/profile",
     SPIN_WHEEL: "/profile/spin-wheel",
+    SPIN_WHEEL_SKIP: "/profile/spin-wheel/skip",
     UPLOAD_PROFILE_PHOTO: "/profile/upload-profile-photo",
     UPLOAD_PHOTO: "/profile/upload-photo",
     UPLOAD_MULTIPLE_PHOTOS: "/profile/upload-multiple-photos",
@@ -46,14 +47,29 @@ const ENDPOINTS = {
   SUBSCRIPTION: {
     VIEW_CONTACT: (id: string) => `/view-contact/${id}`,
     CONTACT_STATUS: (id: string) => `/contact-status/${id}`,
+    CONTACT_VIEWS: "/contact-views",
   },
   HELP_SUPPORT: {
     LIST: "/help-support",
     CREATE: "/help-support",
   },
+  PROFILE_VISITS: {
+    LIST: "profile-visits",
+  },
+  GALLERY_REQUESTS: {
+    SEND: "gallery-requests/send",
+    RESPOND: (id: string) => `gallery-requests/${id}/respond`,
+    LIST: "gallery-requests/list",
+  },
+  SHORTLISTS: {
+    TOGGLE: "shortlists/toggle",
+    LIST: "shortlists",
+    IDS: "shortlists/ids",
+  },
   INTERESTS: {
     SEND: "interests/send",
     RESPOND: (id: string) => `interests/${id}/respond`,
+    CANCEL: (id: string) => `interests/${id}/cancel`,
     CONNECTIONS: "interests/connections",
     LIST: "interests/list",
   },

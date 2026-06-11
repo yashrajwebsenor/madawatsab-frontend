@@ -66,6 +66,12 @@ export enum InterestStatus {
   declined = "declined",
 }
 
+export enum GalleryRequestStatus {
+  pending = "pending",
+  accepted = "accepted",
+  declined = "declined",
+}
+
 export enum AttachmentTypes {
   ad_video = "ad_video",
   ad_banner = "ad_banner",

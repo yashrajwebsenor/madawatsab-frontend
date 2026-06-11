@@ -6,7 +6,9 @@ import OnboardingContinueButton from "@/app/components/onboarding/OnboardingCont
 import OnboardingHeader from "@/app/components/onboarding/OnboardingHeader";
 import { FormSkeleton } from "@/app/components/shared/Skeletons";
 import OnboardingLeftSection from "@/app/components/shared/OnboardingLeftSection";
-import routes from "@/app/configs/route-paths";
+import useConfigStore from "@/app/store/useConfigStore";
+import useUserStore from "@/app/store/useUserStore";
+import resolveGateRoute from "@/app/utils/gate.utils";
 import useCountryCityStates from "@/app/hooks/useCountryCityStates";
 import { FamilyTypes } from "@/app/types/enum";
 import CommonUtils from "@/app/utils/common.utils";
@@ -43,7 +45,15 @@ const defaultValues = {
 
 const page = () => {
   const router = useRouter();
+  const { user } = useUserStore();
+  const { config } = useConfigStore();
   const [loading, setLoading] = useState(false);
+
+  // Next stop after onboarding: entry fee / spin wheel / home, depending on
+  // the admin toggles and the gate flags already stamped on the user. Never
+  // hardcode /entry-fee here — when the fee is disabled the user already has
+  // access and would just bounce off that page.
+  const nextRoute = resolveGateRoute(user, config);
 
   const {
     cities,
@@ -119,7 +129,7 @@ const page = () => {
         color: "success",
         description: "Family details updated successfully",
       });
-      router.push(routes.entryFee);
+      router.push(nextRoute);
     } catch (error) {
       console.log(error);
     }
@@ -351,7 +361,7 @@ const page = () => {
                   isLoading={isSubmitting}
                 />
 
-                <Button as={Link} href={routes.entryFee} variant="light">
+                <Button as={Link} href={nextRoute} variant="light">
                   Skip For Now
                 </Button>
               </div>
