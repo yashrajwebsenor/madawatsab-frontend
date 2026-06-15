@@ -1,6 +1,10 @@
+import api from "@/app/api/api";
+import ENDPOINTS from "@/app/api/endpoints";
 import { navigations } from "@/app/configs/data";
 import routes from "@/app/configs/route-paths";
 import useChatStore from "@/app/store/useChatStore";
+import { ActivityUnreadCounts } from "@/app/types/types";
+import { useQuery } from "@tanstack/react-query";
 import clsx from "clsx";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -17,12 +21,26 @@ const HeaderMenu = ({ className }: { className?: string }) => {
     ),
   );
 
+  // Activity unread total — refetched (no socket). Shares the ["activity-unread"]
+  // key with the Activity page, so opening a tab there clears this badge too.
+  const { data: activityUnread } = useQuery({
+    queryKey: ["activity-unread"],
+    queryFn: async () =>
+      (await api.get(ENDPOINTS.ACTIVITY.UNREAD_COUNTS)) as ActivityUnreadCounts,
+    refetchInterval: 60_000,
+  });
+  const activityTotal = activityUnread?.total ?? 0;
+
   return (
     <div className={clsx("flex items-start gap-7", className)}>
       {navigations.map((item) => {
         const isActive = pathname === item.href;
-        const showUnread =
-          item.href === routes.message.index && totalUnread > 0;
+        const badgeCount =
+          item.href === routes.message.index
+            ? totalUnread
+            : item.href === routes.activity
+              ? activityTotal
+              : 0;
 
         return (
           <Link
@@ -34,9 +52,9 @@ const HeaderMenu = ({ className }: { className?: string }) => {
             )}
           >
             {item.title}
-            {showUnread && (
+            {badgeCount > 0 && (
               <span className="bg-red-500 text-white text-[10px] font-bold leading-none min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full shadow-sm">
-                {totalUnread > 99 ? "99+" : totalUnread}
+                {badgeCount > 99 ? "99+" : badgeCount}
               </span>
             )}
           </Link>

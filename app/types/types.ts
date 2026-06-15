@@ -230,6 +230,31 @@ export interface GalleryRequestItem {
   profile: User;
 }
 
+// A row in the merged All-tab feed: one of several received-activity types,
+// normalised by the backend so `profile` is always the other party.
+export type ActivityFeedType =
+  | "interest"
+  | "profile_visit"
+  | "gallery_request"
+  | "contact_view";
+
+export interface ActivityFeedItem {
+  _id: string;
+  type: ActivityFeedType;
+  status?: InterestStatus | GalleryRequestStatus;
+  createdAt: string;
+  profile: User;
+}
+
+// Per-tab + total unread counts for the Activity badges.
+export interface ActivityUnreadCounts {
+  interest: number;
+  profile_visits: number;
+  gallery_requests: number;
+  contact_views: number;
+  total: number;
+}
+
 export interface ConnectionProfileItem {
   _id: string;
   status: InterestStatus;

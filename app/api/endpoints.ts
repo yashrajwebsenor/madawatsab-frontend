@@ -56,6 +56,11 @@ const ENDPOINTS = {
   PROFILE_VISITS: {
     LIST: "profile-visits",
   },
+  ACTIVITY: {
+    UNREAD_COUNTS: "activity/unread-counts",
+    MARK_READ: "activity/mark-read",
+    ALL: "activity/all",
+  },
   GALLERY_REQUESTS: {
     SEND: "gallery-requests/send",
     RESPOND: (id: string) => `gallery-requests/${id}/respond`,
