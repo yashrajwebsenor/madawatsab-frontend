@@ -41,7 +41,7 @@ const page = () => {
     <div>
       <PageHeaderWrapper>
         <div className="container">
-          <h2 className="text-white text-3xl font-semibold">Help & Supports</h2>
+          <h2 className="text-white text-2xl sm:text-3xl font-semibold">Help & Supports</h2>
           <p className="text-gray-300 text-sm mt-1">
             Contact our support team for assistance or inquiries.
           </p>

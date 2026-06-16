@@ -167,7 +167,7 @@ const page = () => {
     <div>
       <PageHeaderWrapper>
         <div className="container">
-          <h2 className="text-white text-3xl font-semibold">Plans & Pricing</h2>
+          <h2 className="text-white text-2xl sm:text-3xl font-semibold">Plans & Pricing</h2>
           <p className="text-gray-300 text-sm mt-1">
             Manage your connections and view profiles who showed interest in
             you.
@@ -175,14 +175,9 @@ const page = () => {
         </div>
       </PageHeaderWrapper>
 
-      {isLoading ? (
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <PriceGridSkeleton />
-        </div>
-      ) : (
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="flex flex-col gap-7 items-center">
-            {/* Membership summary band */}
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="flex flex-col gap-7 items-center">
+          {/* Membership summary band */}
             <div className="w-full rounded-2xl border border-default-100 bg-content1 p-5 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="flex flex-wrap items-center gap-8">
@@ -214,7 +209,7 @@ const page = () => {
                   )}
                 </div>
 
-                <div className="flex flex-col items-end gap-1">
+                <div className="flex flex-col items-start gap-1 sm:items-end">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-default-400">
                     Contact Views Remaining
                   </span>
@@ -231,13 +226,13 @@ const page = () => {
               </div>
             </div>
 
-            <div className="flex flex-col items-center gap-4">
-              <h1 className="text-4xl font-black text-foreground text-center">
+            <div className="flex w-full flex-col items-center gap-4">
+              <h1 className="w-full text-2xl sm:text-4xl font-black text-foreground text-center">
                 Choose the perfect plan for you
               </h1>
               <Tabs
                 radius="full"
-                className="mt-4"
+                className="mt-4 max-w-full overflow-x-auto"
                 selectedKey={duration}
                 onSelectionChange={(key) =>
                   setDuration(key as PlanDurationTypes)
@@ -249,28 +244,33 @@ const page = () => {
               </Tabs>
             </div>
 
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 w-full">
-              {data?.map((item) => (
-                <PriceCard
-                  key={item._id}
-                  {...item}
-                  isActivating={activatingPlanId === item._id}
-                  isDisabled={
-                    activatingPlanId !== null && activatingPlanId !== item._id
-                  }
-                  hasActivePlan={hasActivePlan}
-                  isCurrentPlan={
-                    hasActivePlan &&
-                    subscription?.planType === item.type &&
-                    subscription?.planDuration === duration
-                  }
-                  onActivate={() => handleActivate(item)}
-                />
-              ))}
-            </div>
+            {isLoading ? (
+              <div className="w-full">
+                <PriceGridSkeleton />
+              </div>
+            ) : (
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 w-full">
+                {data?.map((item) => (
+                  <PriceCard
+                    key={item._id}
+                    {...item}
+                    isActivating={activatingPlanId === item._id}
+                    isDisabled={
+                      activatingPlanId !== null && activatingPlanId !== item._id
+                    }
+                    hasActivePlan={hasActivePlan}
+                    isCurrentPlan={
+                      hasActivePlan &&
+                      subscription?.planType === item.type &&
+                      subscription?.planDuration === duration
+                    }
+                    onActivate={() => handleActivate(item)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
-      )}
     </div>
   );
 };

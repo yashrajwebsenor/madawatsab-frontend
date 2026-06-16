@@ -93,7 +93,7 @@ const ChatListSection = () => {
   return (
     <Card
       shadow="sm"
-      className="border-none flex flex-col h-full w-full max-w-[350px] backdrop-blur-md"
+      className="border-none flex flex-col h-full w-full sm:max-w-[350px] backdrop-blur-md"
     >
       <div className="p-4 border-b border-gray-100">
         <h2 className="text-lg font-medium text-gray-800 mb-2">Messages</h2>

@@ -35,7 +35,9 @@ import {
 } from "react-icons/io5";
 import { MdOutlineWorkOutline, MdVerified } from "react-icons/md";
 import { TiHeartFullOutline } from "react-icons/ti";
+import { FiUnlock } from "react-icons/fi";
 import PrivateBadge from "../shared/PrivateBadge";
+import UserActionsMenu from "../shared/UserActionsMenu";
 import { GalleryRequestStatus } from "@/app/types/enum";
 
 type RevealedContact = { mobile?: string; email?: string } | null;
@@ -78,7 +80,39 @@ const MatchProfileSection = ({
   const receivedInterestId = (profile as ProfileMatch)?.receivedInterestId;
   const galleryRequestStatus = (profile as ProfileMatch)?.galleryRequestStatus;
 
+  // Optimistic block state so the banner/menu flip instantly on block/unblock,
+  // not only after the refetched profile arrives. Reset when the profile
+  // changes. `null` = defer to the server value.
+  const [blockedOverride, setBlockedOverride] = useState<boolean | null>(null);
+  const isBlockedByMe =
+    blockedOverride ?? (profile as ProfileMatch)?.isBlockedByMe;
+
+  useEffect(() => {
+    setBlockedOverride(null);
+  }, [profile._id]);
+
   const [requestingPhotos, setRequestingPhotos] = useState(false);
+  const [unblocking, setUnblocking] = useState(false);
+
+  const handleUnblock = async () => {
+    try {
+      setUnblocking(true);
+      await api.delete(ENDPOINTS.BLOCKS.REMOVE(profile._id));
+      addToast({ color: "success", title: "User unblocked" });
+      setBlockedOverride(false);
+      refetch?.();
+    } catch (error: any) {
+      addToast({
+        color: "danger",
+        title: "Could not unblock",
+        description:
+          error?.response?.data?.message ||
+          "Something went wrong. Please try again.",
+      });
+    } finally {
+      setUnblocking(false);
+    }
+  };
 
   // Ask a private profile for photo access. Subscribers only — the button is
   // hidden otherwise, and the backend enforces it regardless.
@@ -243,7 +277,7 @@ const MatchProfileSection = ({
           removeWrapper
           alt={profile.fullName}
           src={profile?.profilePhoto?.url}
-          className={clsx("w-full h-[400px] md:h-full md:min-h-full object-cover rounded-none", {
+          className={clsx("w-full h-full object-cover rounded-none", {
             "blur-[6px]": blurred,
           })}
         />
@@ -293,7 +327,7 @@ const MatchProfileSection = ({
         )}
       </div>
 
-      <div className="flex-1 p-8 lg:p-10 flex flex-col gap-4">
+      <div className="flex-1 p-5 sm:p-8 lg:p-10 flex flex-col gap-4">
         <div className="flex justify-between items-start">
           <div>
             <div className="flex items-start gap-2">
@@ -307,19 +341,29 @@ const MatchProfileSection = ({
               {profile?.address?.countryName}
             </p>
           </div>
-          <Button
-            isIconOnly
-            radius="full"
-            variant="flat"
-            onPress={() => toggleShortlist(profile._id)}
-            aria-label={shortlisted ? "Remove from shortlist" : "Shortlist"}
-          >
-            {shortlisted ? (
-              <IoBookmark size={18} className="text-primary" />
-            ) : (
-              <IoBookmarkOutline size={18} className="text-gray-600" />
-            )}
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              isIconOnly
+              radius="full"
+              variant="flat"
+              onPress={() => toggleShortlist(profile._id)}
+              aria-label={shortlisted ? "Remove from shortlist" : "Shortlist"}
+            >
+              {shortlisted ? (
+                <IoBookmark size={18} className="text-primary" />
+              ) : (
+                <IoBookmarkOutline size={18} className="text-gray-600" />
+              )}
+            </Button>
+            <UserActionsMenu
+              userId={profile._id}
+              isBlockedByMe={isBlockedByMe}
+              onBlockChange={(blocked) => {
+                setBlockedOverride(blocked);
+                refetch?.();
+              }}
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -378,7 +422,28 @@ const MatchProfileSection = ({
 
         {/* Interest actions — sit in the gap above contact details. */}
         <div className="mt-2">
-          {receivedInterestId ? (
+          {isBlockedByMe ? (
+            <div className="flex items-center justify-between gap-3 rounded-2xl border border-danger/20 bg-danger/5 p-4">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-gray-900">
+                  You blocked this user
+                </p>
+                <p className="text-xs text-gray-500">
+                  Unblock to interact with this profile again.
+                </p>
+              </div>
+              <Button
+                size="sm"
+                color="primary"
+                variant="flat"
+                isLoading={unblocking}
+                onPress={handleUnblock}
+                startContent={!unblocking && <FiUnlock size={16} />}
+              >
+                Unblock
+              </Button>
+            </div>
+          ) : receivedInterestId ? (
             // They sent us a pending interest: accept or decline.
             <div className="rounded-2xl border border-success/20 bg-success/5 p-3">
               <div className="flex items-center gap-3">
@@ -471,7 +536,9 @@ const MatchProfileSection = ({
           )}
         </div>
 
-        {/* Contact reveal — spends one wallet credit on first unlock. */}
+        {/* Contact reveal — spends one wallet credit on first unlock. Hidden
+            while this user is blocked. */}
+        {!isBlockedByMe && (
         <div className="mt-auto pt-4 border-t border-gray-100">
           {checkingStatus ? (
             <div className="flex flex-col gap-2">
@@ -526,6 +593,7 @@ const MatchProfileSection = ({
             </div>
           )}
         </div>
+        )}
       </div>
 
       <Modal

@@ -43,7 +43,7 @@ const TextMessage = ({ message, isMe, showSeen }: Props) => {
     >
       <div
         className={clsx(
-          "flex flex-col gap-1 w-full max-w-[70%]",
+          "flex flex-col gap-1 w-full max-w-[85%] sm:max-w-[70%]",
           isMe ? "items-end" : "items-start",
         )}
       >

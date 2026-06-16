@@ -18,7 +18,7 @@ const OnboardingLeftSection = ({ goBack, title, description }: Props) => {
           height={50}
           src={"/assets/images/logo.png"}
         />
-        <h1 className="font-semibold text-primary text-4xl drop-shadow-sm">
+        <h1 className="font-semibold text-primary text-3xl sm:text-4xl drop-shadow-sm">
           Mada<span className="text-secondary">watsab</span>
         </h1>
       </div>
@@ -29,7 +29,7 @@ const OnboardingLeftSection = ({ goBack, title, description }: Props) => {
         src="/assets/images/underline.png"
         className="w-[150px] mx-auto h-auto object-contain my-3"
       />
-      <p className="text-primary text-3xl font-medium">{title}</p>
+      <p className="text-primary text-2xl sm:text-3xl font-medium">{title}</p>
       {description && <p className="text-gray-800 mt-2">{description}</p>}
     </div>
   );

@@ -11,6 +11,11 @@ const config = {
   ],
   theme: {
     extend: {
+      // Extra small-phone breakpoint (defaults keep sm 640 / md 768 / lg 1024).
+      // Lets card grids go 2-up only once the phone is wide enough (~480px+).
+      screens: {
+        xs: "480px",
+      },
       fontFamily: {
         poppins: ["Poppins", "sans-serif"],
       },

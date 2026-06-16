@@ -1,11 +1,12 @@
-import useUserStore from "@/app/store/useUserStore";
+import api from "@/app/api/api";
+import ENDPOINTS from "@/app/api/endpoints";
 import { User } from "@/app/types/types";
 import {
-  calculateMatchCompatibility,
   CompatibilityDimension,
+  MatchCompatibility,
 } from "@/app/utils/match-compatibility";
-import { Chip, Progress } from "@heroui/react";
-import { useMemo } from "react";
+import { Chip, Progress, Spinner } from "@heroui/react";
+import { useQuery } from "@tanstack/react-query";
 
 const scoreColorClass = (score: number) => {
   if (score >= 80) return "text-success";
@@ -40,28 +41,53 @@ const DimensionRow = ({ dimension }: { dimension: CompatibilityDimension }) => (
   </div>
 );
 
+const ShellCard = ({ children }: { children: React.ReactNode }) => (
+  <div className="bg-white rounded-[2rem] p-5 sm:p-8 shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-3 h-full">
+    {children}
+  </div>
+);
+
 const MatchCapability = ({ profile }: { profile: User }) => {
-  const { user } = useUserStore();
+  // Compatibility is computed server-side (single source of truth) and fetched
+  // separately so the profile payload stays light.
+  const {
+    data: compatibility,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["matchCompatibility", profile._id],
+    queryFn: async () => {
+      const res = await api.get(ENDPOINTS.PROFILE.COMPATIBILITY(profile._id));
+      return (res?.data as MatchCompatibility | null) ?? null;
+    },
+    enabled: !!profile._id,
+  });
 
-  const compatibility = useMemo(
-    () => calculateMatchCompatibility(user, profile),
-    [profile, user],
-  );
-
-  if (!compatibility) {
+  if (isLoading) {
     return (
-      <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-3 h-full">
+      <ShellCard>
+        <Spinner size="lg" />
+        <p className="text-sm text-center text-gray-500">
+          Calculating compatibility…
+        </p>
+      </ShellCard>
+    );
+  }
+
+  if (isError || !compatibility) {
+    return (
+      <ShellCard>
         <h2 className="text-xl font-bold text-gray-900">Match Compatibility</h2>
         <p className="text-sm text-center text-gray-500 max-w-[300px]">
           We need more completed profile details from both sides before a
           compatibility score can be calculated.
         </p>
-      </div>
+      </ShellCard>
     );
   }
 
   return (
-    <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 flex flex-col h-full overflow-hidden">
+    <div className="bg-white rounded-[2rem] p-5 sm:p-8 shadow-sm border border-gray-100 flex flex-col h-full overflow-hidden">
       <div className="flex flex-col gap-6 lg:flex-1 lg:overflow-y-auto lg:pr-2 lg:scrollbar-subtle lg:overscroll-contain">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -91,7 +117,7 @@ const MatchCapability = ({ profile }: { profile: User }) => {
         </div>
 
         <div className="text-center">
-          <h3 className="text-5xl font-black text-primary">
+          <h3 className="text-4xl sm:text-5xl font-black text-primary">
             {compatibility.overallScore}%
           </h3>
           <p className="text-[10px] font-bold text-gray-400 tracking-[0.2em] mt-1 uppercase">

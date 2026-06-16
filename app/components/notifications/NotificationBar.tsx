@@ -18,7 +18,7 @@ const NotificationBar = () => {
           (t) => (
             <div
               onClick={() => toast.dismiss(t)}
-              className="group relative flex w-[400px] cursor-pointer items-center gap-4 overflow-hidden rounded-2xl border border-white/20 bg-white/80 p-4 shadow-[0_20px_50px_rgba(0,0,0,0.15)] backdrop-blur-2xl transition-all hover:scale-[1.02] hover:bg-white/90 active:scale-[0.98] dark:border-white/10 dark:bg-zinc-900/80 dark:hover:bg-zinc-900/90"
+              className="group relative flex w-[min(400px,calc(100vw-2rem))] cursor-pointer items-center gap-4 overflow-hidden rounded-2xl border border-white/20 bg-white/80 p-4 shadow-[0_20px_50px_rgba(0,0,0,0.15)] backdrop-blur-2xl transition-all hover:scale-[1.02] hover:bg-white/90 active:scale-[0.98] dark:border-white/10 dark:bg-zinc-900/80 dark:hover:bg-zinc-900/90"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-50" />
 

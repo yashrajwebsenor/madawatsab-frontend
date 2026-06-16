@@ -4,8 +4,14 @@ import {
   AutocompleteItem,
   Button,
   Chip,
+  Drawer,
+  DrawerBody,
+  DrawerContent,
+  DrawerFooter,
+  DrawerHeader,
   Input,
   Slider,
+  useDisclosure,
 } from "@heroui/react";
 import {
   LuSlidersHorizontal,
@@ -187,6 +193,10 @@ const FilterSection = () => {
 
   const [filters, setFilters] = useState<Filters>(defaultFilters);
 
+  // Mobile-only: the same panel opens in a bottom sheet (lg- screens have no
+  // room for a 300px sidebar).
+  const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
+
   useEffect(() => {
     fetchCountries();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -244,49 +254,68 @@ const FilterSection = () => {
     router.push(`?${queryString}`);
   };
 
-  return (
-    <aside className="w-[300px] shrink-0">
-      {/* Navbar (MainHeader) is sticky h-[70px]; offset by 70px + 16px gap so the
-          panel never tucks under it, and cap height to the remaining viewport. */}
-      <div className="sticky top-[86px] flex max-h-[calc(100vh-102px)] flex-col overflow-y-auto overflow-x-hidden rounded-3xl border border-default-100 bg-white/95 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.18)] backdrop-blur">
-        {/* ---- Header ---- */}
-        <div className="flex items-center justify-between border-b border-default-100 p-5">
-          <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-primary p-2 text-white shadow-md shadow-primary/30">
-              <LuSlidersHorizontal size={16} />
-            </div>
-            <div className="leading-tight">
-              <div className="flex items-center gap-2">
-                <p className="font-semibold">Filters</p>
-                {activeCount > 0 && (
-                  <Chip
-                    size="sm"
-                    variant="flat"
-                    className="h-5 min-w-5 bg-primary/10 text-[10px] font-semibold text-primary"
-                  >
-                    {activeCount}
-                  </Chip>
-                )}
-              </div>
-              <p className="text-[11px] text-default-400">Refine your matches</p>
-            </div>
-          </div>
+  // ---- Shared pieces (rendered both in the desktop sidebar and the mobile
+  // bottom sheet) ----
 
-          <Button
-            size="sm"
-            color="primary"
-            variant="light"
-            onPress={handleReset}
-            isDisabled={activeCount === 0}
-            className="min-w-0 px-2 text-xs font-medium"
-          >
-            Clear
-          </Button>
+  const clearButton = (
+    <Button
+      size="sm"
+      color="primary"
+      variant="light"
+      onPress={handleReset}
+      isDisabled={activeCount === 0}
+      className="h-6 min-w-0 px-2 text-xs font-medium"
+    >
+      Clear
+    </Button>
+  );
+
+  const headerInner = (
+    <div className="flex w-full items-center gap-3">
+      <div className="rounded-xl bg-primary p-2 text-white shadow-md shadow-primary/30">
+        <LuSlidersHorizontal size={16} />
+      </div>
+      <div className="leading-tight">
+        <div className="flex items-center gap-2">
+          <p className="font-semibold">Filters</p>
+          {activeCount > 0 && (
+            <Chip
+              size="sm"
+              variant="flat"
+              className="h-5 min-w-5 bg-primary/10 text-[10px] font-semibold text-primary"
+            >
+              {activeCount}
+            </Chip>
+          )}
         </div>
+        <p className="text-[11px] text-default-400">Refine your matches</p>
+      </div>
+    </div>
+  );
 
-        <div className="flex flex-col gap-5 p-5">
-          {/* ---- Basic filters (always available) ---- */}
-          <SectionTitle icon={<LuUserRound size={13} />} title="Basics" />
+  const applyButton = (
+    <Button
+      radius="lg"
+      color="primary"
+      onPress={() => {
+        handleApply();
+        onClose();
+      }}
+      startContent={<LuSearch size={16} />}
+      className="w-full font-semibold shadow-lg shadow-primary/30"
+    >
+      Apply Filters
+    </Button>
+  );
+
+  const fields = (
+    <>
+      {/* ---- Basic filters (always available) ---- */}
+      <SectionTitle
+        icon={<LuUserRound size={13} />}
+        title="Basics"
+        action={clearButton}
+      />
 
           {/* Range sliders grouped into a soft panel */}
           <div className="flex flex-col gap-6 rounded-2xl bg-default-50 p-4">
@@ -553,22 +582,61 @@ const FilterSection = () => {
               </Button>
             </>
           )}
-        </div>
+    </>
+  );
 
-        {/* ---- Apply (sticky footer) ---- */}
-        <div className="sticky bottom-0 mt-auto border-t border-default-100 bg-white/95 p-4 backdrop-blur">
-          <Button
-            radius="lg"
-            color="primary"
-            onPress={handleApply}
-            startContent={<LuSearch size={16} />}
-            className="w-full font-semibold shadow-lg shadow-primary/30"
-          >
-            Apply Filters
-          </Button>
+  return (
+    <>
+      {/* Desktop: persistent sidebar (lg+ only — no room for 300px below that). */}
+      <aside className="hidden w-[300px] shrink-0 lg:block">
+        {/* Navbar (MainHeader) is sticky h-[70px]; offset by 70px + 16px gap so
+            the panel never tucks under it, and cap height to remaining viewport. */}
+        <div className="sticky top-[86px] flex max-h-[calc(100vh-102px)] flex-col overflow-y-auto overflow-x-hidden rounded-3xl border border-default-100 bg-white/95 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.18)] backdrop-blur">
+          <div className="border-b border-default-100 p-5">{headerInner}</div>
+          <div className="flex flex-col gap-5 p-5">{fields}</div>
+          <div className="sticky bottom-0 mt-auto border-t border-default-100 bg-white/95 p-4 backdrop-blur">
+            {applyButton}
+          </div>
         </div>
-      </div>
-    </aside>
+      </aside>
+
+      {/* Mobile/tablet: floating trigger that opens the same panel as a bottom sheet. */}
+      <Button
+        onPress={onOpen}
+        color="primary"
+        radius="full"
+        startContent={<LuSlidersHorizontal size={16} />}
+        className="fixed bottom-6 right-4 z-40 font-semibold shadow-lg shadow-primary/30 lg:hidden"
+      >
+        Filters
+        {activeCount > 0 && (
+          <Chip
+            size="sm"
+            variant="solid"
+            className="h-5 min-w-5 bg-white/25 text-[10px] font-semibold text-white"
+          >
+            {activeCount}
+          </Chip>
+        )}
+      </Button>
+
+      <Drawer
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        placement="bottom"
+        classNames={{ closeButton: "top-2 right-6" }}
+      >
+        <DrawerContent className="max-h-[88dvh] rounded-t-3xl lg:hidden">
+          <DrawerHeader className="border-b border-default-100 py-3">
+            {headerInner}
+          </DrawerHeader>
+          <DrawerBody className="flex flex-col gap-5 py-4">{fields}</DrawerBody>
+          <DrawerFooter className="border-t border-default-100">
+            {applyButton}
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+    </>
   );
 };
 

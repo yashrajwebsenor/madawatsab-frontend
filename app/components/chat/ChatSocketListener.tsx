@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { addToast } from "@heroui/react";
 import { useQueryClient } from "@tanstack/react-query";
 import api from "@/app/api/api";
 import ENDPOINTS from "@/app/api/endpoints";
@@ -80,6 +81,16 @@ const ChatSocketListener = () => {
       },
     );
 
+    // Server-side net for a send that was rejected (e.g. a block). Neutral toast
+    // only — the message is never stored or broadcast, and nothing reveals a
+    // block exists.
+    const unsubMessageError = socketService.on(
+      socketEvents.LISTEN.MESSAGE_ERROR,
+      () => {
+        addToast({ color: "danger", title: "Something went wrong" });
+      },
+    );
+
     const unsubMessagesRead = socketService.on(
       socketEvents.LISTEN.MESSAGES_READ,
       (data: { roomId?: string; readerId?: string }) => {
@@ -107,6 +118,7 @@ const ChatSocketListener = () => {
 
     return () => {
       unsubNewMessage();
+      unsubMessageError();
       unsubMessagesRead();
       unsubPresenceBulk();
       unsubPresenceUpdate();

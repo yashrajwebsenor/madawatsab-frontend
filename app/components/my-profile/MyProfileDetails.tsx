@@ -40,7 +40,7 @@ const MyProfileDetailsCard = () => {
         </div>
       </CardHeader>
 
-      <CardBody className="pt-20 pb-12 px-10 text-center">
+      <CardBody className="pt-20 pb-12 px-4 sm:px-10 text-center">
         <h2 className="text-[28px] font-bold text-[#0f172a] tracking-tight">
           {user.fullName}
           {age ? `, ${age}` : ""}
@@ -77,7 +77,7 @@ const MyProfileDetailsCard = () => {
 
         <Divider className="my-5 bg-default-100" />
 
-        <div className="grid grid-cols-2 text-left gap-16 px-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 text-left gap-6 sm:gap-16 px-2">
           <div className="space-y-1.5">
             <p className="text-[12px] font-bold text-default-400 uppercase tracking-[0.15em]">
               Education

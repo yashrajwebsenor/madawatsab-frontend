@@ -79,6 +79,19 @@ export enum AttachmentTypes {
   profile_photo = "profile_photo",
   chat_image = "chat_image",
   chat_video = "chat_video",
+  report_evidence = "report_evidence",
+}
+
+// Reasons a user can pick when reporting another user. Mirrors the backend
+// ReportReason enum.
+export enum ReportReason {
+  fraud = "fraud",
+  fake_profile = "fake_profile",
+  wrong_photos = "wrong_photos",
+  inappropriate_content = "inappropriate_content",
+  harassment = "harassment",
+  spam = "spam",
+  other = "other",
 }
 
 export enum AttachmentStatus {

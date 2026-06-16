@@ -1,4 +1,4 @@
-import { LuLifeBuoy, LuLogOut, LuSettings, LuUser } from "react-icons/lu";
+import { LuLifeBuoy, LuLogOut, LuUser, LuUserX } from "react-icons/lu";
 import useUserStore from "@/app/store/useUserStore";
 import CommonUtils from "@/app/utils/common.utils";
 import {
@@ -25,6 +25,9 @@ const UserMenu = () => {
         break;
       case "help":
         router.push(routes.helpSupport);
+        break;
+      case "blocked":
+        router.push(routes.blockedUsers);
         break;
       default:
         break;
@@ -80,11 +83,11 @@ const UserMenu = () => {
         </DropdownItem>
 
         <DropdownItem
-          key="settings"
+          key="blocked"
           showDivider
-          startContent={<LuSettings className="text-lg text-default-500" />}
+          startContent={<LuUserX className="text-lg text-default-500" />}
         >
-          Settings
+          Blocked Users
         </DropdownItem>
 
         <DropdownItem

@@ -15,6 +15,7 @@ const ENDPOINTS = {
     DELETE_PHOTO: (id: string) => `/profile/delete-photo/${id}`,
     DISCOVER: "/profile/discover",
     GET_BY_ID: (id: string) => `/profile/${id}`,
+    COMPATIBILITY: (id: string) => `/profile/${id}/compatibility`,
   },
   AGENTS: {
     REQUEST: `users/agents/request`,
@@ -92,6 +93,14 @@ const ENDPOINTS = {
   },
   ATTACHMENTS: {
     UPLOAD: "attachments/upload",
+  },
+  BLOCKS: {
+    CREATE: "blocks",
+    REMOVE: (userId: string) => `blocks/${userId}`,
+    LIST: "blocks",
+  },
+  REPORTS: {
+    CREATE: "reports",
   },
 };
 

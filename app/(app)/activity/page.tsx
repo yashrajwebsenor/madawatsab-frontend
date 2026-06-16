@@ -5,7 +5,6 @@ import {
   addToast,
   Avatar,
   Button,
-  Input,
   Select,
   SelectItem,
   Tab,
@@ -13,11 +12,9 @@ import {
 } from "@heroui/react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { FiSearch } from "react-icons/fi";
 import {
   IoCallOutline,
   IoEyeOutline,
-  IoFilterOutline,
   IoImagesOutline,
 } from "react-icons/io5";
 import { TiHeartFullOutline } from "react-icons/ti";
@@ -202,13 +199,6 @@ const EmptyState = ({
   </div>
 );
 
-const StatBox = ({ label, value }: { label: string; value: number }) => (
-  <div className="rounded-xl bg-white/10 px-5 py-3 text-center text-white">
-    <p className="text-[11px] uppercase tracking-wide text-white/70">{label}</p>
-    <p className="text-2xl font-semibold leading-tight">{value}</p>
-  </div>
-);
-
 type Row = {
   id: string;
   profile: User;
@@ -216,6 +206,8 @@ type Row = {
   galleryRequestId?: string;
   canAcceptDecline: boolean;
   canShortlistMessage: boolean;
+  // Shortlisted tab: Shortlist button only, no Message (no connection yet).
+  canMessage?: boolean;
   interestStatus?: InterestStatus;
   // ISO timestamp for the notification-style Profile Visits list.
   createdAt?: string;
@@ -407,13 +399,11 @@ const ActivityFeedRow = ({
 const ActivityPanel = ({
   mode,
   subFilter,
-  search,
   sort,
   empty,
 }: {
   mode: Mode;
   subFilter: string;
-  search: string;
   sort: SortKey;
   empty?: { title: string; subtitle: string };
 }) => {
@@ -477,6 +467,7 @@ const ActivityPanel = ({
           profile: i.targetId,
           canAcceptDecline: false,
           canShortlistMessage: true,
+          canMessage: false,
         }));
       }
 
@@ -541,25 +532,14 @@ const ActivityPanel = ({
   });
 
   const rows = useMemo(() => {
-    let list = data ?? [];
-    const q = search.trim().toLowerCase();
-    if (q) {
-      list = list.filter((r) => r.profile?.fullName?.toLowerCase().includes(q));
-    }
+    const list = data ?? [];
     // Backend returns newest-first; reverse a shallow copy for "oldest".
     return sort === "oldest" ? [...list].reverse() : list;
-  }, [data, search, sort]);
+  }, [data, sort]);
 
   if (isLoading) return <MatchGridSkeleton />;
 
   if (rows.length === 0) {
-    if (search) {
-      return (
-        <p className="py-10 text-center text-gray-500">
-          No profiles match your search.
-        </p>
-      );
-    }
     return <EmptyState {...(empty ?? DEFAULT_EMPTY)} />;
   }
 
@@ -604,6 +584,7 @@ const ActivityPanel = ({
             interestStatus={row.interestStatus}
             canAcceptDecline={row.canAcceptDecline}
             canShortlistMessage={row.canShortlistMessage}
+            canMessage={row.canMessage}
             canInterestSendReceive={false}
           />
         ))}
@@ -616,7 +597,6 @@ const ActivityPanel = ({
 const page = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [subFilter, setSubFilter] = useState("");
-  const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortKey>("recent");
 
   const queryClient = useQueryClient();
@@ -666,45 +646,18 @@ const page = () => {
     setSubFilter(SUB_FILTERS_BY_TAB[key]?.[0]?.key ?? "");
   };
 
-  // Stat boxes: total received / sent interest counts (limit 1 — we only read
-  // pagination.total, not the rows).
-  const { data: counts } = useQuery({
-    queryKey: ["activity-counts"],
-    queryFn: async () => {
-      const [received, sent]: any[] = await Promise.all([
-        api.get(ENDPOINTS.INTERESTS.LIST, {
-          params: { page: 1, type: "received", limit: 1 },
-        }),
-        api.get(ENDPOINTS.INTERESTS.LIST, {
-          params: { page: 1, type: "sent", limit: 1 },
-        }),
-      ]);
-      return {
-        received: received?.pagination?.total ?? 0,
-        sent: sent?.pagination?.total ?? 0,
-      };
-    },
-  });
-
   return (
     <div>
       <PageHeaderWrapper>
-        <div className="container flex items-center justify-between gap-4">
-          <div>
-            <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-white/60">
-              Dashboard / <span className="text-amber-300">Activity</span>
-            </p>
-            <h2 className="text-3xl font-semibold text-white">Activity</h2>
-            <p className="mt-1 text-sm text-gray-300">
-              Manage your connections and view profiles who showed interest in
-              you.
-            </p>
-          </div>
-
-          <div className="hidden shrink-0 gap-3 sm:flex">
-            <StatBox label="Received" value={counts?.received ?? 0} />
-            <StatBox label="Sent" value={counts?.sent ?? 0} />
-          </div>
+        <div className="container">
+          <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-white/60">
+            Dashboard / <span className="text-amber-300">Activity</span>
+          </p>
+          <h2 className="text-2xl sm:text-3xl font-semibold text-white">Activity</h2>
+          <p className="mt-1 text-sm text-gray-300">
+            Manage your connections and view profiles who showed interest in
+            you.
+          </p>
         </div>
       </PageHeaderWrapper>
 
@@ -714,7 +667,7 @@ const page = () => {
             aria-label="Activity sections"
             variant="underlined"
             color="primary"
-            className="mb-4 overflow-x-auto"
+            className="mb-4 max-w-full overflow-x-auto"
             selectedKey={activeTab}
             onSelectionChange={(key) => onTabChange(key as string)}
           >
@@ -739,16 +692,7 @@ const page = () => {
             })}
           </Tabs>
 
-          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <Input
-              isClearable
-              className="sm:max-w-xs"
-              placeholder="Search by name..."
-              value={search}
-              onValueChange={setSearch}
-              onClear={() => setSearch("")}
-              startContent={<FiSearch className="text-gray-400" />}
-            />
+          <div className="mb-5 flex justify-end">
             <Select
               aria-label="Sort"
               className="sm:max-w-[180px]"
@@ -766,16 +710,7 @@ const page = () => {
           </div>
 
           {subFilters && (
-            <div className="mb-5 flex items-center gap-3">
-              <Button
-                isIconOnly
-                radius="full"
-                variant="bordered"
-                aria-label="Filters"
-                className="shrink-0"
-              >
-                <IoFilterOutline />
-              </Button>
+            <div className="mb-5 flex flex-wrap items-center gap-3">
               {subFilters.map((f) => {
                 const active = subFilter === f.key;
                 const showPillBadge =
@@ -809,7 +744,6 @@ const page = () => {
               key={`${activeTab}-${subFilter}`}
               mode={mode}
               subFilter={subFilter}
-              search={search}
               sort={sort}
               empty={EMPTY_STATES[activeTab]}
             />

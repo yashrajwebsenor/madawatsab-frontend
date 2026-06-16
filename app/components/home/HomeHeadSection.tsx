@@ -13,7 +13,7 @@ const HomeHeadSection = () => {
       <div className="container flex gap-5 flex-col sm:flex-row sm:items-center sm:justify-between">
         <div className="flex gap-5 flex-col sm:flex-row sm:items-center sm:justify-between w-full">
           <div>
-            <h2 className="text-white text-3xl font-semibold">
+            <h2 className="text-white text-2xl sm:text-3xl font-semibold">
               Browse <span className="text-secondary">Matches</span>
             </h2>
             <p className="text-gray-300 text-sm mt-1">

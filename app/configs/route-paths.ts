@@ -5,6 +5,7 @@ const routes = {
   spinReward: "/spin-reward",
   profile: "/my-profile",
   helpSupport: "/help-support",
+  blockedUsers: "/blocked",
 
   auth: {
     login: "/auth/login",

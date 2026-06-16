@@ -35,6 +35,9 @@ type Props = {
   canInterestSendReceive?: boolean;
   // Profile Visits footer: Shortlist + Message instead of interest actions.
   canShortlistMessage?: boolean;
+  // Hide the Message button in the Shortlist footer (e.g. Shortlisted tab,
+  // where no connection exists so messaging isn't allowed).
+  canMessage?: boolean;
 };
 
 const MatchCard = ({
@@ -46,6 +49,7 @@ const MatchCard = ({
   canAcceptDecline,
   canInterestSendReceive,
   canShortlistMessage,
+  canMessage = true,
 }: Props) => {
   const [loading, setLoading] = useState(false);
   // Which respond action is in-flight, so we can keep both buttons mounted
@@ -197,15 +201,6 @@ const MatchCard = ({
               <div className="flex items-center gap-2">
                 <Button
                   size="sm"
-                  color="danger"
-                  variant="flat"
-                  isIconOnly
-                  isDisabled={loading}
-                >
-                  <IoMdClose />
-                </Button>
-                <Button
-                  size="sm"
                   color="success"
                   variant="flat"
                   isIconOnly
@@ -291,15 +286,17 @@ const MatchCard = ({
             >
               {shortlisted ? "Shortlisted" : "Shortlist"}
             </Button>
-            <Button
-              fullWidth
-              size="sm"
-              color="primary"
-              onPress={handleMessage}
-              startContent={<IoChatbubbleEllipsesOutline />}
-            >
-              Message
-            </Button>
+            {canMessage && (
+              <Button
+                fullWidth
+                size="sm"
+                color="primary"
+                onPress={handleMessage}
+                startContent={<IoChatbubbleEllipsesOutline />}
+              >
+                Message
+              </Button>
+            )}
           </div>
         )}
       </div>

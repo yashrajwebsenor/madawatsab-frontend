@@ -130,7 +130,7 @@ const Page = ({ params }: { params: Promise<{ id: string }> }) => {
   }, [messages?.length]);
 
   return (
-    <div className="flex gap-3 container py-5 h-[calc(100vh-70px)] relative">
+    <div className="flex gap-3 container py-5 h-[calc(100dvh-70px)] relative">
       <div className="hidden sm:block">
         <ChatListSection />
       </div>

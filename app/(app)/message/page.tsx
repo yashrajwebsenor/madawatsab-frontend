@@ -6,7 +6,7 @@ import { LuMessageCircle } from "react-icons/lu";
 
 const page = () => {
   return (
-    <div className="flex gap-5 container py-5 h-[calc(100vh-70px)] relative">
+    <div className="flex gap-5 container py-5 h-[calc(100dvh-70px)] relative">
       <ChatListSection />
 
       <Card

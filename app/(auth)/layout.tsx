@@ -33,8 +33,8 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
         Bismillah
       </p>
 
-      <div className="absolute w-full flex h-full items-center justify-center gap-20 z-40 container">
-        <div className="w-[500px] sm:block hidden">
+      <div className="absolute w-full flex h-full items-center justify-center lg:gap-20 z-40 container">
+        <div className="w-[500px] hidden lg:block">
           <div className="flex items-end gap-1">
             <Image
               alt="Logo"
@@ -62,7 +62,7 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
             rooted in n faith, respect, and shared values.
           </p>
         </div>
-        <div className="sm:w-[500px] w-full">{children}</div>
+        <div className="w-full lg:w-[500px]">{children}</div>
       </div>
     </div>
   );

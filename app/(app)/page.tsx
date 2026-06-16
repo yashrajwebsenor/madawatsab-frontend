@@ -46,6 +46,7 @@ const page = () => {
         items: (res?.data || []) as Match[],
         currentPage: pageParam,
         totalPages: res?.pagination?.totalPages ?? 1,
+        total: res?.pagination?.total ?? 0,
       };
     },
     getNextPageParam: (lastPage) =>
@@ -59,9 +60,7 @@ const page = () => {
     [data],
   );
 
-  const totalProfiles = useMemo(() => {
-    return (matches || []).filter((item) => item.cardType === "profile").length;
-  }, [matches]);
+  const totalProfiles = data?.pages[0]?.total ?? 0;
 
   // Keep latest paging state in a ref so the observer callback always reads
   // fresh values without needing to be re-created on every render.
@@ -97,7 +96,9 @@ const page = () => {
       <div className="container flex gap-7 py-5">
         <FilterSection />
 
-        <div className="flex-1">
+        {/* pb clearance on mobile so the last row isn't hidden under the
+            floating Filters button (the desktop sidebar replaces it at lg+). */}
+        <div className="flex-1 pb-20 lg:pb-0">
           <Tabs
             aria-label="Discover sections"
             color="primary"

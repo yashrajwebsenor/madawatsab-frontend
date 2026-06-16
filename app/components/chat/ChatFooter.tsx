@@ -1,12 +1,13 @@
 import socketService from "@/app/socket";
 import socketEvents from "@/app/socket/socket-config";
 import useUserStore from "@/app/store/useUserStore";
+import useChatStore from "@/app/store/useChatStore";
 import useSubscriptionAccess from "@/app/hooks/useSubscriptionAccess";
 import { AttachmentTypes, MessageTypes } from "@/app/types/enum";
-import { Button, Input } from "@heroui/react";
+import { addToast, Button, Input } from "@heroui/react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { FiSend } from "react-icons/fi";
+import { FiSend, FiUnlock } from "react-icons/fi";
 import { RiAttachmentLine } from "react-icons/ri";
 import { BsEmojiSmile } from "react-icons/bs";
 import { IoClose } from "react-icons/io5";
@@ -22,6 +23,11 @@ const ChatFooter = () => {
   const router = useRouter();
   const { user } = useUserStore();
   const { canSendMessages } = useSubscriptionAccess();
+  const roomId = id as string;
+  const room = useChatStore((s) => s.roomsById[roomId]);
+  const participant = useChatStore((s) => s.participants[roomId]);
+  const upsertRoom = useChatStore((s) => s.upsertRoom);
+  const [unblocking, setUnblocking] = useState(false);
   const [message, setMessage] = useState("");
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -66,9 +72,43 @@ const ChatFooter = () => {
     }
   };
 
+  const handleUnblock = async () => {
+    if (!participant?._id) return;
+    try {
+      setUnblocking(true);
+      await api.delete(ENDPOINTS.BLOCKS.REMOVE(participant._id));
+      addToast({ color: "success", title: "User unblocked" });
+      upsertRoom({
+        _id: roomId,
+        isBlockedByMe: false,
+        messagingDisabled: false,
+      } as any);
+    } catch (error: any) {
+      addToast({
+        color: "danger",
+        title: "Could not unblock",
+        description:
+          error?.response?.data?.message ||
+          "Something went wrong. Please try again.",
+      });
+    } finally {
+      setUnblocking(false);
+    }
+  };
+
   const handleSend = async (e: any) => {
     e?.preventDefault();
     if (!message.trim() && !selectedFile) return;
+
+    // Messaging is disabled for this conversation (a block exists in either
+    // direction). Fail neutrally: never reveal a block, never emit, nothing is
+    // stored. The server enforces the same as a safety net.
+    if (room?.messagingDisabled) {
+      addToast({ color: "danger", title: "Something went wrong" });
+      setMessage("");
+      removeFile();
+      return;
+    }
 
     try {
       let attachment;
@@ -108,6 +148,28 @@ const ChatFooter = () => {
 
     return await api.post(ENDPOINTS.ATTACHMENTS.UPLOAD, payload);
   };
+
+  // I blocked this user: replace the composer with an Unblock bar. Takes
+  // priority over the subscription lock — unblocking is always available.
+  if (room?.isBlockedByMe) {
+    return (
+      <div className="w-full p-3 border-t bg-white/90 backdrop-blur-xl flex items-center justify-between gap-3 sticky bottom-0 z-10">
+        <span className="text-sm font-medium text-gray-500">
+          You blocked this user
+        </span>
+        <Button
+          size="sm"
+          color="primary"
+          variant="flat"
+          isLoading={unblocking}
+          onPress={handleUnblock}
+          startContent={!unblocking && <FiUnlock size={16} />}
+        >
+          Unblock
+        </Button>
+      </div>
+    );
+  }
 
   // Reading/receiving is open to everyone; sending requires a plan with
   // canMessage. Replace the composer with a locked bar that routes to pricing.
@@ -186,7 +248,7 @@ const ChatFooter = () => {
         {showEmojiPicker && (
           <div
             ref={emojiPickerRef}
-            className="absolute bottom-full right-0 mb-2 z-50 shadow-2xl rounded-2xl overflow-hidden border border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-200"
+            className="absolute bottom-full right-0 mb-2 z-50 w-[min(320px,calc(100vw-2rem))] shadow-2xl rounded-2xl overflow-hidden border border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-200"
           >
             <EmojiPicker
               onEmojiClick={(emojiData) => {
@@ -196,7 +258,7 @@ const ChatFooter = () => {
               searchDisabled={false}
               skinTonesDisabled={true}
               height={380}
-              width={320}
+              width="100%"
             />
           </div>
         )}

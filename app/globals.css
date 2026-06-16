@@ -12,6 +12,17 @@ body {
   box-sizing: border-box;
   background-color: #eff0f0;
   font-family: "Poppins", sans-serif;
+  /* Net against accidental horizontal overflow on mobile. `clip` (not `hidden`)
+     so the body never becomes a scroll container — `hidden` would force
+     overflow-y:auto and break the sticky header / sticky filter panel. */
+  overflow-x: clip;
+}
+
+/* Media should never force the page wider than the viewport. */
+img,
+video {
+  max-width: 100%;
+  height: auto;
 }
 
 @layer base {

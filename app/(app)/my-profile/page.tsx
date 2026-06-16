@@ -16,7 +16,7 @@ const page = () => {
     <div>
       <PageHeaderWrapper>
         <div className="container">
-          <h2 className="text-white text-3xl font-semibold">My Profile</h2>
+          <h2 className="text-white text-2xl sm:text-3xl font-semibold">My Profile</h2>
           <p className="text-gray-300 text-sm mt-1">
             Stay updated on your professional reach and manage your growing
             network.
@@ -36,8 +36,8 @@ const page = () => {
           </div>
         </div>
 
-        <div className="mt-7 flex gap-7 items-start">
-          <div className="flex flex-col gap-7 flex-[2]">
+        <div className="mt-7 flex flex-col gap-7 lg:flex-row lg:items-start">
+          <div className="flex flex-col gap-7 lg:flex-[2]">
             <ProfilePhotoSection />
             <PersonalInformation />
             <EducationSection />
@@ -45,7 +45,7 @@ const page = () => {
             <ReligiousSection />
             <LifestyleSection />
           </div>
-          <div className="flex flex-col gap-7 flex-1 sticky top-24">
+          <div className="flex flex-col gap-7 lg:flex-1 lg:sticky lg:top-24">
             <MembershipCard />
             <MyProfileDetailsCard />
           </div>

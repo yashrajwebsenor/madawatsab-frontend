@@ -53,7 +53,7 @@ const MatchExtraDetails = ({
   };
 
   return (
-    <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100">
+    <div className="bg-white rounded-[2rem] p-4 sm:p-6 shadow-sm border border-gray-100">
       <Tabs
         color="primary"
         className="w-full"

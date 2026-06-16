@@ -172,6 +172,9 @@ export type ProfileMatch = User & {
   receivedInterestId?: string | null;
   // My gallery request to this (private) profile — null when never requested.
   galleryRequestStatus?: GalleryRequestStatus | null;
+  // Directed: did the viewer block this profile? Drives the Unblock UI + blocked
+  // banner. The reverse direction is never exposed.
+  isBlockedByMe?: boolean;
 };
 
 export type Match = ProfileMatch | (Advertisement & { cardType: "ad" });
@@ -273,6 +276,11 @@ export interface ChatRoom {
   lastMessage?: Message | null;
   participants: ChatRoomParticipant[];
   unreadCount: number;
+  // Backend-computed per viewer. `isBlockedByMe` => the viewer blocked the other
+  // participant (drives the Unblock composer). `messagingDisabled` => a block
+  // exists in either direction (the blocked side fails the send neutrally).
+  isBlockedByMe?: boolean;
+  messagingDisabled?: boolean;
 }
 
 export interface ChatRoomParticipant {

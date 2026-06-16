@@ -37,7 +37,7 @@ const page = () => {
     <div>
       <PageHeaderWrapper>
         <div className="container">
-          <h2 className="text-white text-3xl font-semibold">
+          <h2 className="text-white text-2xl sm:text-3xl font-semibold">
             Interests & Requests
           </h2>
           <p className="text-gray-300 text-sm mt-1">
@@ -49,7 +49,7 @@ const page = () => {
 
       <div className="py-5 container">
         <Tabs
-          className="mb-5"
+          className="mb-5 max-w-full overflow-x-auto"
           selectedKey={activeTab}
           onSelectionChange={setActiveTab as any}
         >
