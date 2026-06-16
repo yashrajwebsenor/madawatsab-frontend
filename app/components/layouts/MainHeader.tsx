@@ -15,7 +15,7 @@ import {
 } from "@heroui/react";
 import { FiMenu } from "react-icons/fi";
 import { LuX, LuUser, LuLifeBuoy, LuUserX, LuLogOut } from "react-icons/lu";
-import type { PanInfo } from "framer-motion";
+import type { PanInfo, Variants } from "framer-motion";
 import Link from "next/link";
 import routes from "@/app/configs/route-paths";
 import useUserStore from "@/app/store/useUserStore";
@@ -49,7 +49,7 @@ const MainHeader = () => {
     variants: {
       enter: { x: 0, transition: { x: { duration: 0.2, ease: "easeOut" } } },
       exit: { x: "100%", transition: { x: { duration: 0.15, ease: "easeIn" } } },
-    },
+    } satisfies Variants,
     drag: "x" as const,
     dragConstraints: { left: 0, right: 0 },
     dragElastic: { left: 0, right: 0.6 },
