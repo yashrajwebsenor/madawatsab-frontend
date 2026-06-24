@@ -4,6 +4,7 @@ import { PlanDurationTypes } from "@/app/types/enum";
 import { Button, Card, Chip } from "@heroui/react";
 import { useRouter } from "next/navigation";
 import { IoIosLock } from "react-icons/io";
+import { IoReceiptOutline } from "react-icons/io5";
 import { MdWorkspacePremium } from "react-icons/md";
 
 const MembershipCard = () => {
@@ -99,6 +100,16 @@ const MembershipCard = () => {
         onPress={() => router.push(routes.pricing)}
       >
         {hasActivePlan ? "View Plans" : "Subscribe Now"}
+      </Button>
+
+      <Button
+        fullWidth
+        variant="light"
+        className="mt-2"
+        startContent={<IoReceiptOutline size={16} />}
+        onPress={() => router.push(routes.billing)}
+      >
+        Billing &amp; Invoices
       </Button>
 
       {!hasActivePlan && contactViewBalance > 0 && (

@@ -11,6 +11,8 @@ import { MatchDetailSkeleton } from "@/app/components/shared/Skeletons";
 import LockedContent from "@/app/components/shared/LockedContent";
 import useSubscriptionAccess from "@/app/hooks/useSubscriptionAccess";
 import { useQuery } from "@tanstack/react-query";
+import { Avatar } from "@heroui/react";
+import { LuUserX } from "react-icons/lu";
 
 const page = ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = use(params);
@@ -31,6 +33,23 @@ const page = ({ params }: { params: Promise<{ id: string }> }) => {
     <div className="container py-5 space-y-8">
       {isLoading ? (
         <MatchDetailSkeleton />
+      ) : data?.isDeleted ? (
+        // The member self-deleted their account: show a neutral tombstone with
+        // no fields or actions instead of the full profile.
+        <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
+          <Avatar
+            size="lg"
+            radius="full"
+            icon={<LuUserX className="text-3xl" />}
+            classNames={{ base: "bg-default-200 text-default-500 w-20 h-20" }}
+          />
+          <div>
+            <p className="text-lg font-semibold">Deleted User</p>
+            <p className="mt-1 text-sm text-default-500">
+              This profile is no longer available.
+            </p>
+          </div>
+        </div>
       ) : data ? (
         <>
           <div className="flex flex-col lg:flex-row lg:items-start gap-8">

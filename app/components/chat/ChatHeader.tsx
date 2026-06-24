@@ -3,12 +3,16 @@ import { ChatRoom } from "@/app/types/types";
 import { Avatar, Button } from "@heroui/react";
 import clsx from "clsx";
 import Link from "next/link";
+import { useState } from "react";
 import { LuChevronLeft } from "react-icons/lu";
+import { FiSearch } from "react-icons/fi";
 import routes from "@/app/configs/route-paths";
 import UserActionsMenu from "@/app/components/shared/UserActionsMenu";
+import ChatSearch from "@/app/components/chat/ChatSearch";
 
 const ChatHeader = ({ roomId }: { roomId: string }) => {
   const { participants, roomsById, upsertRoom } = useChatStore();
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const pariticipant = participants[roomId!];
   const room = roomsById[roomId!];
@@ -57,12 +61,33 @@ const ChatHeader = ({ roomId }: { roomId: string }) => {
         </div>
       </div>
 
-      {pariticipant?._id && (
-        <UserActionsMenu
-          userId={pariticipant._id}
-          isBlockedByMe={room?.isBlockedByMe}
-          onBlockChange={handleBlockChange}
-        />
+      <div className="flex items-center gap-1">
+        {/* Search this conversation's history. Hidden for a self-deleted peer. */}
+        {!pariticipant?.isDeleted && (
+          <Button
+            isIconOnly
+            size="sm"
+            variant="light"
+            radius="full"
+            aria-label="Search in conversation"
+            onPress={() => setSearchOpen(true)}
+          >
+            <FiSearch size={18} />
+          </Button>
+        )}
+
+        {/* No block/report actions against a self-deleted account. */}
+        {pariticipant?._id && !pariticipant?.isDeleted && (
+          <UserActionsMenu
+            userId={pariticipant._id}
+            isBlockedByMe={room?.isBlockedByMe}
+            onBlockChange={handleBlockChange}
+          />
+        )}
+      </div>
+
+      {searchOpen && (
+        <ChatSearch roomId={roomId} onClose={() => setSearchOpen(false)} />
       )}
     </div>
   );

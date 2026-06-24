@@ -89,6 +89,26 @@ export const ChatListSkeleton = ({ count = 7 }: { count?: number }) => (
   </div>
 );
 
+// One message-search result row — name + date line, then a snippet line.
+export const MessageSearchRowSkeleton = () => (
+  <div className="flex flex-col gap-2 px-4 py-3">
+    <div className="flex justify-between">
+      <Skeleton className="h-3 w-24 rounded-lg" />
+      <Skeleton className="h-2.5 w-16 rounded-lg" />
+    </div>
+    <Skeleton className="h-2.5 w-full rounded-lg" />
+  </div>
+);
+
+// Stack of search-result rows — shown while a chat search is in flight.
+export const MessageSearchSkeleton = ({ count = 5 }: { count?: number }) => (
+  <div className="flex flex-col divide-y divide-gray-100">
+    {Array.from({ length: count }).map((_, i) => (
+      <MessageSearchRowSkeleton key={i} />
+    ))}
+  </div>
+);
+
 // Generic stacked-card placeholder — agent lists, drawers, simple feeds.
 export const CardListSkeleton = ({
   count = 4,

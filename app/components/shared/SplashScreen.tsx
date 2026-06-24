@@ -1,8 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Image from "next/image";
 import { Spinner } from "@heroui/react";
+import BrandMark from "./BrandMark";
 
 const SplashScreen = () => {
   return (
@@ -20,15 +20,9 @@ const SplashScreen = () => {
             repeat: Infinity,
             ease: "easeInOut",
           }}
-          className="relative w-36 h-36 md:w-48 md:h-48 drop-shadow-2xl"
+          className="relative w-36 h-36 md:w-48 md:h-48"
         >
-          <Image
-            src="/assets/images/logo.png"
-            alt="Loading..."
-            fill
-            className="object-contain"
-            priority
-          />
+          <BrandMark animated className="h-full w-full" />
         </motion.div>
 
         <div className="flex flex-col items-center gap-4">

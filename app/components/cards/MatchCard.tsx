@@ -71,6 +71,7 @@ const MatchCard = ({
     address,
     isPrivate,
     shouldBlur,
+    isDeleted,
   } = profile;
 
   // Backend decides blur via subscription + privacy. Fall back to isPrivate
@@ -81,6 +82,8 @@ const MatchCard = ({
   const age = dayjs().diff(dayjs(dob), "years");
 
   const handleCardClick = () => {
+    // A self-deleted member has no profile to open and no actions to take.
+    if (isDeleted) return;
     router.push(routes.matches.details(_id!));
   };
 
@@ -145,7 +148,7 @@ const MatchCard = ({
   return (
     <Card
       as="div"
-      isPressable
+      isPressable={!isDeleted}
       shadow="none"
       onPress={handleCardClick}
       className="border-none bg-white h-full hover:shadow-md transition-shadow duration-300"
@@ -155,28 +158,33 @@ const MatchCard = ({
           height={200}
           alt={fullName}
           width={"100%"}
-          isZoomed={!blurred}
+          isZoomed={!blurred && !isDeleted}
           src={profilePhoto?.url}
-          className={clsx("object-cover", { "blur-[6px]": blurred })}
+          className={clsx("object-cover", {
+            "blur-[6px]": blurred,
+            "grayscale opacity-70": isDeleted,
+          })}
         />
         {/* Hide the badge once a gallery grant unblurs this private profile. */}
-        {isPrivate && blurred && <PrivateBadge />}
+        {!isDeleted && isPrivate && blurred && <PrivateBadge />}
         {/* z-20 keeps the bookmark clickable above the PrivateBadge overlay. */}
-        <Button
-          isIconOnly
-          size="sm"
-          radius="full"
-          variant="flat"
-          onPress={handleShortlist}
-          aria-label={shortlisted ? "Remove from shortlist" : "Shortlist"}
-          className="absolute right-2 top-2 z-20 bg-white/80 backdrop-blur-sm"
-        >
-          {shortlisted ? (
-            <IoBookmark className="text-primary" />
-          ) : (
-            <IoBookmarkOutline className="text-gray-600" />
-          )}
-        </Button>
+        {!isDeleted && (
+          <Button
+            isIconOnly
+            size="sm"
+            radius="full"
+            variant="flat"
+            onPress={handleShortlist}
+            aria-label={shortlisted ? "Remove from shortlist" : "Shortlist"}
+            className="absolute right-2 top-2 z-20 bg-white/80 backdrop-blur-sm"
+          >
+            {shortlisted ? (
+              <IoBookmark className="text-primary" />
+            ) : (
+              <IoBookmarkOutline className="text-gray-600" />
+            )}
+          </Button>
+        )}
       </div>
 
       <div className="p-3 text-sm">
@@ -185,7 +193,7 @@ const MatchCard = ({
             {CommonUtils.formatNameWithUserId({ fullName, userId })}
           </p>
 
-          {interestStatus === InterestStatus.declined ? (
+          {isDeleted ? null : interestStatus === InterestStatus.declined ? (
             <p className="text-danger text-xs bg-danger/10 px-3 py-1 rounded-lg">
               Rejected
             </p>
@@ -241,7 +249,7 @@ const MatchCard = ({
           )}
         </div>
 
-        {canAcceptDecline && (
+        {!isDeleted && canAcceptDecline && (
           <div className="mt-5 flex gap-3">
             <Button
               fullWidth
@@ -272,7 +280,7 @@ const MatchCard = ({
           </div>
         )}
 
-        {canShortlistMessage && (
+        {!isDeleted && canShortlistMessage && (
           <div className="mt-5 flex gap-3">
             <Button
               fullWidth

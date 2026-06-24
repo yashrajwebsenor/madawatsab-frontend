@@ -4,8 +4,10 @@ const routes = {
   entryFee: "/entry-fee",
   spinReward: "/spin-reward",
   profile: "/my-profile",
+  billing: "/billing",
   helpSupport: "/help-support",
   blockedUsers: "/blocked",
+  search: "/search",
 
   auth: {
     login: "/auth/login",

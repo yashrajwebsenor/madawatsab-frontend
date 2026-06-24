@@ -124,6 +124,10 @@ const page = () => {
             <div className="grid gap-5 sm:grid-cols-3">
               {matches.map((item, i) => {
                 const isTrigger = i === Math.max(matches.length - 6, 0);
+                // Ads are injected by the server via random pick, so the same
+                // ad _id can recur in the feed. Key on the flattened index
+                // (stable for this append-only list) to keep keys unique.
+                const key = `${item.cardType}-${item._id}-${i}`;
                 const card =
                   item.cardType === "profile" ? (
                     <MatchCard
@@ -135,11 +139,11 @@ const page = () => {
                     <AdvertisementCard {...item} />
                   );
                 return isTrigger ? (
-                  <div key={item._id} ref={triggerRef}>
+                  <div key={key} ref={triggerRef}>
                     {card}
                   </div>
                 ) : (
-                  <div key={item._id}>{card}</div>
+                  <div key={key}>{card}</div>
                 );
               })}
             </div>

@@ -13,9 +13,10 @@ type Props = {
   message: Message;
   isMe: boolean;
   showSeen?: boolean;
+  isHighlighted?: boolean;
 };
 
-const TextMessage = ({ message, isMe, showSeen }: Props) => {
+const TextMessage = ({ message, isMe, showSeen, isHighlighted }: Props) => {
   const [copied, setCopied] = useState(false);
   const time = dayjs(message.createdAt).format("hh:mm A");
 
@@ -62,10 +63,11 @@ const TextMessage = ({ message, isMe, showSeen }: Props) => {
 
           <div
             className={clsx(
-              "px-3 py-1.5 shadow-sm transition-all duration-200",
+              "px-3 py-1.5 shadow-sm transition-all duration-500",
               isMe
                 ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-none"
                 : "bg-content2 text-foreground rounded-2xl rounded-tl-none border border-divider/5",
+              isHighlighted && "ring-2 ring-primary ring-offset-2",
             )}
           >
             <p className="text-[13px] leading-relaxed break-words whitespace-pre-wrap">

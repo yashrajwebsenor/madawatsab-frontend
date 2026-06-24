@@ -14,9 +14,15 @@ type Props = {
   message: Message;
   isMe: boolean;
   showSeen?: boolean;
+  isHighlighted?: boolean;
 };
 
-const AttachmentMessage = ({ message, isMe, showSeen }: Props) => {
+const AttachmentMessage = ({
+  message,
+  isMe,
+  showSeen,
+  isHighlighted,
+}: Props) => {
   const [copied, setCopied] = useState(false);
   const time = dayjs(message.createdAt).format("hh:mm A");
   const hasContent = message.content && message.content.trim().length > 0;
@@ -126,10 +132,11 @@ const AttachmentMessage = ({ message, isMe, showSeen }: Props) => {
 
           <div
             className={clsx(
-              "relative p-1 shadow-sm transition-all duration-200 overflow-hidden",
+              "relative p-1 shadow-sm transition-all duration-500 overflow-hidden",
               isMe
                 ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-none"
                 : "bg-content2 text-foreground rounded-2xl rounded-tl-none border border-divider/5",
+              isHighlighted && "ring-2 ring-primary ring-offset-2",
             )}
           >
             <div className="w-full min-w-[200px]">{renderAttachment()}</div>

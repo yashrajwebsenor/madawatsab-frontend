@@ -59,8 +59,16 @@ const ChatSocketListener = () => {
         if (!message?.roomId) return;
         const store = useChatStore.getState();
         const hasRoom = !!store.roomsById[message.roomId];
+        // The visible window is a detached mid-history slice (search jump): the
+        // newest message isn't loaded, so appending here would leave a gap.
+        // Skip the insert; the "jump to latest" pill (hasNewer) lets the user
+        // resync to the live tail, which pulls this message in.
+        const detached = !!store.hasNewerByRoom[message.roomId];
 
-        store.appendMessage(message);
+        if (!detached) {
+          store.appendMessage(message);
+        }
+        // Keep the room-list preview fresh regardless of detached state.
         store.upsertRoomFromMessage(message);
         if (!hasRoom) {
           void loadMissingRoomSummary(message.roomId);
@@ -68,8 +76,8 @@ const ChatSocketListener = () => {
 
         if (message.senderId === userId) return;
 
-        if (store.activeRoomId === message.roomId) {
-          // Room is open — mark it read and tell the backend.
+        if (store.activeRoomId === message.roomId && !detached) {
+          // Room is open at the live tail — mark it read and tell the backend.
           store.markRoomRead(message.roomId);
           socketService.emit(socketEvents.EMIT.READ_MESSAGES, {
             roomId: message.roomId,

@@ -149,6 +149,19 @@ const ChatFooter = () => {
     return await api.post(ENDPOINTS.ATTACHMENTS.UPLOAD, payload);
   };
 
+  // The other member self-deleted their account: no composer, no actions —
+  // just a neutral notice. Takes priority over every other footer state.
+  if (participant?.isDeleted) {
+    return (
+      <div className="w-full p-4 border-t bg-white/90 backdrop-blur-xl flex items-center justify-center gap-2 sticky bottom-0 z-10 text-gray-500">
+        <IoIosLock size={18} />
+        <span className="text-sm font-medium">
+          This account is no longer available
+        </span>
+      </div>
+    );
+  }
+
   // I blocked this user: replace the composer with an Unblock bar. Takes
   // priority over the subscription lock — unblocking is always available.
   if (room?.isBlockedByMe) {

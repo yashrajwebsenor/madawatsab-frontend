@@ -27,6 +27,7 @@ import {
   IoBookmark,
   IoBookmarkOutline,
   IoCallOutline,
+  IoChatbubbleEllipsesOutline,
   IoCheckmark,
   IoImagesOutline,
   IoLanguageOutline,
@@ -76,6 +77,7 @@ const MatchProfileSection = ({
 
   const isInterestSent = (profile as ProfileMatch)?.isInterestSent;
   const isInterestReceived = (profile as ProfileMatch)?.isInterestReceived;
+  const isConnected = (profile as ProfileMatch)?.isConnected;
   const sentInterestId = (profile as ProfileMatch)?.sentInterestId;
   const receivedInterestId = (profile as ProfileMatch)?.receivedInterestId;
   const galleryRequestStatus = (profile as ProfileMatch)?.galleryRequestStatus;
@@ -93,6 +95,33 @@ const MatchProfileSection = ({
 
   const [requestingPhotos, setRequestingPhotos] = useState(false);
   const [unblocking, setUnblocking] = useState(false);
+  const [openingChat, setOpeningChat] = useState(false);
+
+  // Open (or reuse) the 1:1 room with this connected profile, then jump into it.
+  const handleMessage = async () => {
+    try {
+      setOpeningChat(true);
+      const res: any = await api.post(ENDPOINTS.CHAT.CREATE_ROOM, {
+        receiverId: profile._id,
+      });
+      const roomId = res?.data?._id;
+      if (roomId) {
+        router.push(routes.message.chat(roomId));
+      } else {
+        router.push(routes.message.index);
+      }
+    } catch (error: any) {
+      addToast({
+        color: "danger",
+        title: "Could not open chat",
+        description:
+          error?.response?.data?.message ||
+          "Something went wrong. Please try again.",
+      });
+    } finally {
+      setOpeningChat(false);
+    }
+  };
 
   const handleUnblock = async () => {
     try {
@@ -510,6 +539,33 @@ const MatchProfileSection = ({
                 startContent={!cancelling && <IoMdClose size={16} />}
               >
                 Cancel
+              </Button>
+            </div>
+          ) : isConnected ? (
+            // Interest accepted in either direction: they're connected. Drop the
+            // stale "Interest Sent" / "Interested in You" label and push them to
+            // start a conversation.
+            <div className="flex items-center gap-3 rounded-2xl border border-success/20 bg-success/5 p-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-success/15 text-success">
+                <IoCheckmark size={20} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-gray-900">Connected</p>
+                <p className="text-xs text-gray-500">
+                  You both accepted — start a conversation
+                </p>
+              </div>
+              <Button
+                size="sm"
+                color="success"
+                className="font-semibold text-white"
+                isLoading={openingChat}
+                onPress={handleMessage}
+                startContent={
+                  !openingChat && <IoChatbubbleEllipsesOutline size={16} />
+                }
+              >
+                Message
               </Button>
             </div>
           ) : isInterestSent ? (

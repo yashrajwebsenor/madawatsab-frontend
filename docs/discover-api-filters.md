@@ -95,6 +95,8 @@ be ignored).
 | -------------- | ----------- | ------------------- | -------------- |
 | `location`     | number (id) | `42`                | **City id** (see reference). City filtering is advanced-only; country/state above are normal. |
 | `userId`       | string      | `MADA001`           | Exact match on the public member id (search a specific profile). |
+| `fullName`     | string      | `Ahmed Khan`        | Partial, case-insensitive name match. Min **3 chars** (shorter values are ignored). |
+| `mobile`       | string      | `9876543210`        | Exact mobile-number match. Min **3 chars** (shorter values are ignored). |
 | `maslak`       | string      | `Hanafi`            | Exact match. |
 | `qualification`| string      | `Bachelors`         | Partial, case-insensitive match. Common values: `Undergraduate`, `Bachelors`, `Masters`, `PhD`, `Diploma`. |
 | `language`     | string      | `Urdu`              | Partial, case-insensitive match (mother tongue). |

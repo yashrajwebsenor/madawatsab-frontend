@@ -16,6 +16,7 @@ const ENDPOINTS = {
     DISCOVER: "/profile/discover",
     GET_BY_ID: (id: string) => `/profile/${id}`,
     COMPATIBILITY: (id: string) => `/profile/${id}/compatibility`,
+    DELETE_ACCOUNT: "/profile/me",
   },
   AGENTS: {
     REQUEST: `users/agents/request`,
@@ -37,6 +38,8 @@ const ENDPOINTS = {
   PAYMENTS: {
     CREATE: "/payments/create",
     VERIFY: "/payments/verify",
+    INVOICES: "/payments/invoices",
+    INVOICE: (id: string) => `/payments/invoices/${id}`,
   },
   MATCHES: {
     GET_ALL: "/matches",
@@ -83,9 +86,13 @@ const ENDPOINTS = {
     CLICK: (id: string) => `advertisements/${id}/click`,
   },
   CHAT: {
+    CREATE_ROOM: "chats/rooms",
     GET_ROOMS: "chats/rooms",
     GET_ROOM_SUMMARY: (roomId: string) => `chats/rooms/${roomId}/summary`,
     GET_MESSAGES: (roomId: string) => `chats/${roomId}/messages`,
+    SEARCH_MESSAGES: (roomId: string) => `chats/${roomId}/messages/search`,
+    MESSAGES_AROUND: (roomId: string, messageId: string) =>
+      `chats/${roomId}/messages/around/${messageId}`,
   },
   NOTIFICATIONS: {
     SUBSCRIBE: "notifications/subscribe-to-topic",

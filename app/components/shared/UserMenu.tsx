@@ -1,4 +1,11 @@
-import { LuLifeBuoy, LuLogOut, LuUser, LuUserX } from "react-icons/lu";
+import {
+  LuLifeBuoy,
+  LuLogOut,
+  LuReceipt,
+  LuTrash2,
+  LuUser,
+  LuUserX,
+} from "react-icons/lu";
 import useUserStore from "@/app/store/useUserStore";
 import CommonUtils from "@/app/utils/common.utils";
 import {
@@ -9,11 +16,14 @@ import {
   DropdownTrigger,
 } from "@heroui/react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import routes from "@/app/configs/route-paths";
+import DeleteAccountDialog from "../dialogs/DeleteAccountDialog";
 
 const UserMenu = () => {
   const { user } = useUserStore();
   const router = useRouter();
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const handleAction = (key: React.Key) => {
     switch (key) {
@@ -23,11 +33,17 @@ const UserMenu = () => {
       case "profile":
         router.push(routes.profile);
         break;
+      case "billing":
+        router.push(routes.billing);
+        break;
       case "help":
         router.push(routes.helpSupport);
         break;
       case "blocked":
         router.push(routes.blockedUsers);
+        break;
+      case "delete":
+        setDeleteOpen(true);
         break;
       default:
         break;
@@ -35,6 +51,7 @@ const UserMenu = () => {
   };
 
   return (
+    <>
     <Dropdown size="sm" placement="bottom-end" className="min-w-[220px]">
       <DropdownTrigger>
         <Avatar
@@ -76,6 +93,13 @@ const UserMenu = () => {
         </DropdownItem>
 
         <DropdownItem
+          key="billing"
+          startContent={<LuReceipt className="text-lg text-default-500" />}
+        >
+          Billing & Invoices
+        </DropdownItem>
+
+        <DropdownItem
           key="help"
           startContent={<LuLifeBuoy className="text-lg text-default-500" />}
         >
@@ -92,14 +116,27 @@ const UserMenu = () => {
 
         <DropdownItem
           key="logout"
-          color="danger"
-          className="text-danger"
-          startContent={<LuLogOut className="text-lg" />}
+          startContent={<LuLogOut className="text-lg text-default-500" />}
         >
           Log Out
         </DropdownItem>
+
+        <DropdownItem
+          key="delete"
+          color="danger"
+          className="text-danger"
+          startContent={<LuTrash2 className="text-lg" />}
+        >
+          Delete Account
+        </DropdownItem>
       </DropdownMenu>
     </Dropdown>
+
+      <DeleteAccountDialog
+        isOpen={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+      />
+    </>
   );
 };
 

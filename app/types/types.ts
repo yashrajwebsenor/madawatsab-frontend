@@ -6,6 +6,7 @@ import {
   HelpSupportStatus,
   InterestStatus,
   MessageTypes,
+  PaymentTypes,
   PlanDurationTypes,
   ProfileFor,
   ReligiousFrequency,
@@ -54,6 +55,10 @@ export interface User {
   // Set by the backend when this user object is returned to another viewer:
   // true means the viewer should render the photo blurred.
   shouldBlur?: boolean;
+  // True when this user has self-deleted their account. The backend masks the
+  // record to a neutral stub ("Deleted User", no photo/PII); the UI renders a
+  // placeholder and disables all interactions.
+  isDeleted?: boolean;
   contactViewBalance?: number;
   contactViewLifetime?: number;
   subscription: Subscription;
@@ -96,6 +101,21 @@ export interface Subscription {
   contactViewLifetime: number;
   // Remaining contact views (mirrors contactViewBalance) — kept for compatibility.
   viewCountRemaining: number;
+}
+
+// A downloadable billing record. Mirrors the shape the payments/invoices
+// endpoints return (amount already converted to rupees server-side).
+export interface Invoice {
+  invoiceNumber: string | null;
+  userId: string;
+  userName: string | null;
+  planName: string | null;
+  paymentType: PaymentTypes;
+  amount: number;
+  currency: string;
+  status: string;
+  razorpayPaymentId: string | null;
+  purchasedAt: string;
 }
 
 export interface Family {
@@ -166,6 +186,9 @@ export type ProfileMatch = User & {
   cardType: "profile";
   isInterestSent: boolean;
   isInterestReceived: boolean;
+  // True once an interest in either direction is accepted — the two are
+  // connected and can message each other.
+  isConnected?: boolean;
   // Pending interest ids — present only while the request is pending, so the
   // detail page can cancel (sent) or accept/decline (received).
   sentInterestId?: string | null;
@@ -292,6 +315,8 @@ export interface ChatRoomParticipant {
   isPrivate?: boolean;
   // Backend-computed: blur this participant's avatar (no sub, or private target).
   shouldBlur?: boolean;
+  // True when this participant self-deleted their account (masked stub).
+  isDeleted?: boolean;
 }
 
 export interface Attachment {

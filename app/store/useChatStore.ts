@@ -10,6 +10,14 @@ interface UseChatStore {
   roomOrder: string[];
   messagesByRoom: Record<string, Message[]>;
   hasMoreByRoom: Record<string, boolean>;
+  // True while the visible window for a room is a detached mid-history slice
+  // (after a search jump) that does NOT include the newest message. When true,
+  // live socket messages must not be appended (would leave a gap) and the
+  // "jump to latest" pill is shown.
+  hasNewerByRoom: Record<string, boolean>;
+  // Message id the chat screen should scroll to + briefly highlight after a
+  // jump. Consumed once, then cleared via clearPendingScroll.
+  pendingScrollMessageId: string | null;
   activeRoomId: string | null;
   participants: Record<string, ChatRoomParticipant>;
   onlineUsers: Record<string, boolean>;
@@ -28,6 +36,23 @@ interface UseChatStore {
     messages: Message[],
     hasMore: boolean,
   ) => void;
+  // Adds messages toward the NEWER end (index 0 side). Mirror of
+  // prependOlderMessages; used when paging downward from a jumped window.
+  prependNewerMessages: (
+    roomId: string,
+    messages: Message[],
+    hasNewer: boolean,
+  ) => void;
+  // Replaces the visible messages with a context window around a searched
+  // message and arms the scroll/highlight. hasNewer marks the detached state.
+  loadContextWindow: (
+    roomId: string,
+    messages: Message[],
+    hasOlder: boolean,
+    hasNewer: boolean,
+    anchorId: string,
+  ) => void;
+  clearPendingScroll: () => void;
   appendMessage: (message: Message) => void;
   markMessagesReadInRoom: (roomId: string, readerId: string) => void;
 
@@ -54,6 +79,8 @@ const useChatStore = create<UseChatStore>()((set) => ({
   roomOrder: [],
   messagesByRoom: {},
   hasMoreByRoom: {},
+  hasNewerByRoom: {},
+  pendingScrollMessageId: null,
   activeRoomId: null,
   participants: {},
   onlineUsers: {},
@@ -122,6 +149,9 @@ const useChatStore = create<UseChatStore>()((set) => ({
     set((state) => ({
       messagesByRoom: { ...state.messagesByRoom, [roomId]: messages },
       hasMoreByRoom: { ...state.hasMoreByRoom, [roomId]: hasMore },
+      // A fresh page-1 load is anchored at the live tail — no newer messages
+      // exist beyond it, so the window is back in live mode.
+      hasNewerByRoom: { ...state.hasNewerByRoom, [roomId]: false },
     })),
 
   prependOlderMessages: (roomId, messages, hasMore) =>
@@ -133,6 +163,32 @@ const useChatStore = create<UseChatStore>()((set) => ({
       },
       hasMoreByRoom: { ...state.hasMoreByRoom, [roomId]: hasMore },
     })),
+
+  prependNewerMessages: (roomId, messages, hasNewer) =>
+    set((state) => {
+      const current = state.messagesByRoom[roomId] ?? [];
+      const seen = new Set(current.map((m) => m._id));
+      // Newer messages belong at the front (index 0 side). Drop any already
+      // present so an overlapping fetch can't duplicate rows.
+      const fresh = messages.filter((m) => !seen.has(m._id));
+      return {
+        messagesByRoom: {
+          ...state.messagesByRoom,
+          [roomId]: [...fresh, ...current],
+        },
+        hasNewerByRoom: { ...state.hasNewerByRoom, [roomId]: hasNewer },
+      };
+    }),
+
+  loadContextWindow: (roomId, messages, hasOlder, hasNewer, anchorId) =>
+    set((state) => ({
+      messagesByRoom: { ...state.messagesByRoom, [roomId]: messages },
+      hasMoreByRoom: { ...state.hasMoreByRoom, [roomId]: hasOlder },
+      hasNewerByRoom: { ...state.hasNewerByRoom, [roomId]: hasNewer },
+      pendingScrollMessageId: anchorId,
+    })),
+
+  clearPendingScroll: () => set({ pendingScrollMessageId: null }),
 
   appendMessage: (message) =>
     set((state) => {

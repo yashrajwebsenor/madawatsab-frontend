@@ -3,6 +3,8 @@
 import { HeroUIProvider, ToastProvider } from "@heroui/react";
 import { Toaster } from "sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import SplashIntro from "../shared/SplashIntro";
+import UpgradePlanDialog from "../dialogs/UpgradePlanDialog";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,6 +23,8 @@ const Providers = ({ children }: { children: React.ReactNode }) => {
     <HeroUIProvider>
       <QueryClientProvider client={queryClient}>
         {children}
+        <SplashIntro />
+        <UpgradePlanDialog />
         <ToastProvider placement="top-right" />
         <Toaster position="top-right" richColors expand={true} closeButton />
       </QueryClientProvider>
