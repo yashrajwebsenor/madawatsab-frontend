@@ -55,6 +55,13 @@ interface UseChatStore {
   clearPendingScroll: () => void;
   appendMessage: (message: Message) => void;
   markMessagesReadInRoom: (roomId: string, readerId: string) => void;
+  // Drops a single message from the room's list (used for "delete for me").
+  removeMessage: (roomId: string, messageId: string) => void;
+  // Flips a message to its deleted tombstone in place (used for "delete for
+  // everyone": local optimistic + remote messageDeleted socket event).
+  markMessageDeleted: (roomId: string, messageId: string) => void;
+  // Wipes the loaded message window for a room after a "clear chat".
+  clearMessagesInRoom: (roomId: string) => void;
 
   // active room
   setActiveRoom: (roomId: string | null) => void;
@@ -155,14 +162,21 @@ const useChatStore = create<UseChatStore>()((set) => ({
     })),
 
   prependOlderMessages: (roomId, messages, hasMore) =>
-    set((state) => ({
-      // Older messages sit at the end of the newest-first array.
-      messagesByRoom: {
-        ...state.messagesByRoom,
-        [roomId]: [...(state.messagesByRoom[roomId] ?? []), ...messages],
-      },
-      hasMoreByRoom: { ...state.hasMoreByRoom, [roomId]: hasMore },
-    })),
+    set((state) => {
+      const current = state.messagesByRoom[roomId] ?? [];
+      const seen = new Set(current.map((m) => m._id));
+      // Older messages sit at the end of the newest-first array. Drop any
+      // already present so an overlapping fetch can't duplicate rows (dup _id
+      // -> React duplicate-key warning + render glitches).
+      const fresh = messages.filter((m) => !seen.has(m._id));
+      return {
+        messagesByRoom: {
+          ...state.messagesByRoom,
+          [roomId]: [...current, ...fresh],
+        },
+        hasMoreByRoom: { ...state.hasMoreByRoom, [roomId]: hasMore },
+      };
+    }),
 
   prependNewerMessages: (roomId, messages, hasNewer) =>
     set((state) => {
@@ -216,6 +230,68 @@ const useChatStore = create<UseChatStore>()((set) => ({
             m.senderId !== readerId && !m.isRead ? { ...m, isRead: true } : m,
           ),
         },
+      };
+    }),
+
+  removeMessage: (roomId, messageId) =>
+    set((state) => {
+      const current = state.messagesByRoom[roomId];
+      if (!current) return state;
+      return {
+        messagesByRoom: {
+          ...state.messagesByRoom,
+          [roomId]: current.filter((m) => m._id !== messageId),
+        },
+      };
+    }),
+
+  markMessageDeleted: (roomId, messageId) =>
+    set((state) => {
+      const current = state.messagesByRoom[roomId];
+      const tombstone = (m: Message): Message => ({
+        ...m,
+        isDeleted: true,
+        content: "",
+        attachment: null,
+      });
+
+      const next: Partial<UseChatStore> = {};
+
+      if (current?.some((m) => m._id === messageId)) {
+        next.messagesByRoom = {
+          ...state.messagesByRoom,
+          [roomId]: current.map((m) => (m._id === messageId ? tombstone(m) : m)),
+        };
+      }
+
+      // Keep the room-list preview consistent when the deleted message was the
+      // last one shown.
+      const room = state.roomsById[roomId];
+      if (room?.lastMessage && room.lastMessage._id === messageId) {
+        next.roomsById = {
+          ...state.roomsById,
+          [roomId]: { ...room, lastMessage: tombstone(room.lastMessage) },
+        };
+      }
+
+      return Object.keys(next).length ? next : state;
+    }),
+
+  clearMessagesInRoom: (roomId) =>
+    set((state) => {
+      const room = state.roomsById[roomId];
+      return {
+        messagesByRoom: { ...state.messagesByRoom, [roomId]: [] },
+        hasMoreByRoom: { ...state.hasMoreByRoom, [roomId]: false },
+        hasNewerByRoom: { ...state.hasNewerByRoom, [roomId]: false },
+        // Blank the conversation preview so the cleared thread no longer shows a
+        // last message in the chat list.
+        roomsById: room
+          ? {
+              ...state.roomsById,
+              [roomId]: { ...room, lastMessage: undefined, unreadCount: 0 },
+            }
+          : state.roomsById,
       };
     }),
 

@@ -53,10 +53,27 @@ const page = () => {
   const onSubmit = handleSubmit(async (data) => {
     data.mobile = mobile;
     try {
-      const response = await api.post(ENDPOINTS.AUTH.VERIFY_OTP, data);
+      // Token captured on the login screen (null if permission was denied or the
+      // fetch hadn't finished). Backend stores it on the verified user.
+      const pendingFcmToken =
+        typeof window !== "undefined"
+          ? localStorage.getItem("pendingFcmToken")
+          : null;
+
+      const response = await api.post(ENDPOINTS.AUTH.VERIFY_OTP, {
+        ...data,
+        fcmToken: pendingFcmToken ?? undefined,
+      });
       const result = response?.data;
       setUser(result?.user);
       localStorage.setItem("token", result?.accessToken);
+
+      // Promote the token to the synced key (the one logout unregisters and the
+      // layout sync diffs against) so we don't re-register it post-login.
+      if (pendingFcmToken) {
+        localStorage.setItem("fcmToken", pendingFcmToken);
+        localStorage.removeItem("pendingFcmToken");
+      }
       if (result?.user?.isOnboardingCompleted) {
         router.replace(routes.home);
       } else {

@@ -8,9 +8,9 @@ import { HelpSupportStatus } from "../types/enum";
 class CommonUtils {
   static async logout() {
     try {
-      await this.unSubscribeToTopic();
+      await this.unregisterFcmToken();
     } catch (error) {
-      console.log("Failed to unsubscribe before logout:", error);
+      console.log("Failed to unregister fcm token before logout:", error);
     }
 
     socketService.disconnect();
@@ -70,18 +70,18 @@ class CommonUtils {
     return `${phone.slice(0, 5)}*****`;
   }
 
-  static async subscribeToTopic(fcmToken: string) {
+  static async registerFcmToken(fcmToken: string) {
     if (fcmToken) {
-      await api.post(ENDPOINTS.NOTIFICATIONS.SUBSCRIBE, { fcmToken });
+      await api.post(ENDPOINTS.NOTIFICATIONS.REGISTER, { fcmToken });
     }
     return;
   }
 
-  static async unSubscribeToTopic() {
+  static async unregisterFcmToken() {
     if (typeof window !== "undefined") {
       const fcmToken = localStorage.getItem("fcmToken");
       if (fcmToken) {
-        await api.post(ENDPOINTS.NOTIFICATIONS.UNSUBSCRIBE, { fcmToken });
+        await api.post(ENDPOINTS.NOTIFICATIONS.UNREGISTER, { fcmToken });
       }
     }
     return;

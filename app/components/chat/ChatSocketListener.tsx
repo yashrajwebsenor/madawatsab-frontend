@@ -11,6 +11,9 @@ import useChatStore from "@/app/store/useChatStore";
 import useUserStore from "@/app/store/useUserStore";
 import { ChatRoom, Message } from "@/app/types/types";
 
+// Matches MESSAGE_LIMIT on the chat screen so a resync loads the same tail size.
+const CHAT_PAGE_SIZE = 20;
+
 /**
  * Single global place that owns the chat socket listeners. Mounted once in the
  * (app) layout so screens never register their own newMessage / presence
@@ -53,6 +56,22 @@ const ChatSocketListener = () => {
       }
     };
 
+    // Reload the live tail (page 1) for a room — used to snap a detached/jumped
+    // window back to the newest messages.
+    const resyncToLiveTail = async (roomId: string) => {
+      try {
+        const res: any = await api.get(ENDPOINTS.CHAT.GET_MESSAGES(roomId), {
+          params: { page: 1, limit: CHAT_PAGE_SIZE },
+        });
+        const data = res?.data ?? [];
+        useChatStore
+          .getState()
+          .setMessages(roomId, data, data.length === CHAT_PAGE_SIZE);
+      } catch {
+        // Non-fatal: the "jump to latest" pill still lets the user resync.
+      }
+    };
+
     const unsubNewMessage = socketService.on(
       socketEvents.LISTEN.NEW_MESSAGE,
       (message: Message) => {
@@ -64,6 +83,20 @@ const ChatSocketListener = () => {
         // Skip the insert; the "jump to latest" pill (hasNewer) lets the user
         // resync to the live tail, which pulls this message in.
         const detached = !!store.hasNewerByRoom[message.roomId];
+
+        // The user SENT a message while viewing a detached (jumped) window.
+        // Appending into the slice would drop it / leave a gap, so instead snap
+        // back to the live tail — their own message is the newest there. This
+        // mirrors WhatsApp jumping you to the bottom when you send.
+        if (
+          detached &&
+          message.senderId === userId &&
+          store.activeRoomId === message.roomId
+        ) {
+          void resyncToLiveTail(message.roomId);
+          store.upsertRoomFromMessage(message);
+          return;
+        }
 
         if (!detached) {
           store.appendMessage(message);
@@ -109,6 +142,16 @@ const ChatSocketListener = () => {
       },
     );
 
+    // A message was deleted for everyone — flip it to a tombstone in place on
+    // every open client (sender included; the broadcast is the source of truth).
+    const unsubMessageDeleted = socketService.on(
+      socketEvents.LISTEN.MESSAGE_DELETED,
+      (data: { roomId?: string; messageId?: string }) => {
+        if (!data?.roomId || !data?.messageId) return;
+        useChatStore.getState().markMessageDeleted(data.roomId, data.messageId);
+      },
+    );
+
     const unsubPresenceBulk = socketService.on(
       socketEvents.LISTEN.PRESENCE_BULK,
       (data: Record<string, boolean>) => {
@@ -128,6 +171,7 @@ const ChatSocketListener = () => {
       unsubNewMessage();
       unsubMessageError();
       unsubMessagesRead();
+      unsubMessageDeleted();
       unsubPresenceBulk();
       unsubPresenceUpdate();
     };

@@ -17,7 +17,7 @@ const layout = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const { user } = useUserStore();
   const { config } = useConfigStore();
-  const { initFirebase } = useFirebase();
+  const { syncToken } = useFirebase();
 
   // Entry-fee / spin-wheel gates. The gate pages themselves live in the
   // (gate) group (bare shell), so when a gate is pending this layout's only
@@ -41,14 +41,11 @@ const layout = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
-    if (typeof window !== "undefined") {
-      const fcmToken = localStorage.getItem("fcmToken");
-      if (user?._id && !fcmToken) {
-        initFirebase();
-      }
-    }
-
     if (user?._id) {
+      // Silent: registers only if permission is granted and the token is new
+      // or rotated. Covers the case where the token wasn't captured at login
+      // (permission granted late, or fetch was slow) plus token rotation.
+      syncToken();
       socketService.connect(user._id);
     }
   }, [user, router, nextGate]);

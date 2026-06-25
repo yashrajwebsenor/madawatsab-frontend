@@ -5,9 +5,10 @@ import { clsx } from "clsx";
 import dayjs from "dayjs";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { FiCheck, FiCopy } from "react-icons/fi";
+import { FiCheck, FiCopy, FiSlash } from "react-icons/fi";
 import { toast } from "sonner";
 import SeenMessageText from "./SeenMessageText";
+import MessageActionsMenu from "./MessageActionsMenu";
 
 type Props = {
   message: Message;
@@ -48,32 +49,44 @@ const TextMessage = ({ message, isMe, showSeen, isHighlighted }: Props) => {
           isMe ? "items-end" : "items-start",
         )}
       >
-        <div className="relative flex items-center gap-2">
-          <button
-            onClick={handleCopy}
-            className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-full hover:bg-content3/50 text-foreground/40 hover:text-foreground/80"
-            title="Copy text"
-          >
-            {copied ? (
-              <FiCheck size={14} className="text-success" />
-            ) : (
-              <FiCopy size={14} />
-            )}
-          </button>
+        <div className="relative flex items-center gap-1">
+          <MessageActionsMenu message={message} isMe={isMe} />
 
-          <div
-            className={clsx(
-              "px-3 py-1.5 shadow-sm transition-all duration-500",
-              isMe
-                ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-none"
-                : "bg-content2 text-foreground rounded-2xl rounded-tl-none border border-divider/5",
-              isHighlighted && "ring-2 ring-primary ring-offset-2",
-            )}
-          >
-            <p className="text-[13px] leading-relaxed break-words whitespace-pre-wrap">
-              {message.content}
-            </p>
-          </div>
+          {!message.isDeleted && (
+            <button
+              onClick={handleCopy}
+              className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-full hover:bg-content3/50 text-foreground/40 hover:text-foreground/80"
+              title="Copy text"
+            >
+              {copied ? (
+                <FiCheck size={14} className="text-success" />
+              ) : (
+                <FiCopy size={14} />
+              )}
+            </button>
+          )}
+
+          {message.isDeleted ? (
+            <div className="px-3 py-1.5 rounded-2xl bg-content2 border border-divider/5 text-foreground/50 italic">
+              <p className="text-[13px] leading-relaxed flex items-center gap-1.5">
+                <FiSlash size={13} /> This message was deleted
+              </p>
+            </div>
+          ) : (
+            <div
+              className={clsx(
+                "px-3 py-1.5 shadow-sm transition-all duration-500",
+                isMe
+                  ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-none"
+                  : "bg-content2 text-foreground rounded-2xl rounded-tl-none border border-divider/5",
+                isHighlighted && "ring-2 ring-primary",
+              )}
+            >
+              <p className="text-[13px] leading-relaxed break-words whitespace-pre-wrap">
+                {message.content}
+              </p>
+            </div>
+          )}
         </div>
 
         <div

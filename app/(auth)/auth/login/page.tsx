@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import routes from "@/app/configs/route-paths";
 import AuthWidgetSection from "../AuthWidgetSection";
 import { FaPhoneAlt } from "react-icons/fa";
+import { fetchToken } from "@/app/utils/firebase";
 
 const defaultValues = {
   mobile: "",
@@ -34,6 +35,16 @@ const page = () => {
 
       if (typeof window !== "undefined") {
         sessionStorage.setItem("pending_mobile", data.mobile);
+
+        // Prompt for notification permission now (user just acted) and stash the
+        // token so verify-otp can persist it server-side. Fire-and-forget: the
+        // user spends time entering the OTP, so the token is usually ready by
+        // submit; if not, the post-login sync in (app)/layout registers it.
+        fetchToken()
+          .then((token) => {
+            if (token) localStorage.setItem("pendingFcmToken", token);
+          })
+          .catch(() => {});
       }
 
       addToast({

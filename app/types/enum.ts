@@ -17,6 +17,7 @@ export enum MaritalStatus {
   never_married = "never_married",
   divorced = "divorced",
   widowed = "widowed",
+  awaiting_divorce = "awaiting_divorce",
 }
 
 export enum Sects {

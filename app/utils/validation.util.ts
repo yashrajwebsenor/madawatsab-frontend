@@ -55,11 +55,13 @@ export const familyDetailsSchema: any = yup.object({
     .string()
     .trim()
     .required("Father occupation is required"),
+  fatherContact: yup.string().trim().optional(),
   motherName: yup.string().trim().required("Mother name is required"),
   motherOccupation: yup
     .string()
     .trim()
     .required("Mother occupation is required"),
+  motherContact: yup.string().trim().optional(),
   country: yup.string().required("Country is required"),
   state: yup.string().required("State is required"),
   city: yup.string().required("City is required"),
@@ -101,11 +103,13 @@ export const aboutFamilySchema: any = yup.object({
     .string()
     .trim()
     .required("Father occupation is required"),
+  fatherContact: yup.string().trim().optional(),
   motherName: yup.string().trim().required("Mother name is required"),
   motherOccupation: yup
     .string()
     .trim()
     .required("Mother occupation is required"),
+  motherContact: yup.string().trim().optional(),
 });
 
 export const helpSupportSchema: any = yup.object({

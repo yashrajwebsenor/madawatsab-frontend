@@ -123,8 +123,10 @@ export interface Family {
   familyType: string;
   fatherName: string;
   fatherOccupation: string;
+  fatherContact: string;
   motherName: string;
   motherOccupation: string;
+  motherContact: string;
 }
 
 export interface Address {
@@ -333,4 +335,8 @@ export interface Message {
   isRead: boolean;
   createdAt: string;
   attachment?: Attachment | null;
+  // Tombstone flag set by "delete for everyone". When true the client renders a
+  // neutral placeholder instead of the original content/attachment.
+  isDeleted?: boolean;
+  deletedAt?: string;
 }

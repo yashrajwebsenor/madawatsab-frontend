@@ -209,17 +209,17 @@ const ChatSearch = ({
                       className="text-left px-4 py-3 hover:bg-gray-50 transition-colors flex flex-col gap-1"
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-semibold text-gray-700">
+                        <span className="text-xs font-semibold text-gray-700 truncate min-w-0">
                           {isMe ? "You" : participant?.fullName || "Them"}
                         </span>
-                        <span className="text-[10px] text-gray-400 flex items-center gap-1">
+                        <span className="text-[10px] text-gray-400 flex items-center gap-1 shrink-0 whitespace-nowrap">
                           {dayjs(msg.createdAt).format("DD MMM YYYY")}
                           {jumpingId === msg._id && (
                             <CircularProgress size="sm" aria-label="Opening" />
                           )}
                         </span>
                       </div>
-                      <p className="text-[13px] text-gray-600 leading-snug line-clamp-2">
+                      <p className="text-[13px] text-gray-600 leading-snug line-clamp-2 break-words min-w-0">
                         {renderSnippet(msg.content, trimmed)}
                       </p>
                     </button>

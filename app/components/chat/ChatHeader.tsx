@@ -9,10 +9,16 @@ import { FiSearch } from "react-icons/fi";
 import routes from "@/app/configs/route-paths";
 import UserActionsMenu from "@/app/components/shared/UserActionsMenu";
 import ChatSearch from "@/app/components/chat/ChatSearch";
+import ConfirmDialog from "@/app/components/shared/ConfirmDialog";
+import api from "@/app/api/api";
+import ENDPOINTS from "@/app/api/endpoints";
 
 const ChatHeader = ({ roomId }: { roomId: string }) => {
-  const { participants, roomsById, upsertRoom } = useChatStore();
+  const { participants, roomsById, upsertRoom, clearMessagesInRoom } =
+    useChatStore();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [clearOpen, setClearOpen] = useState(false);
+  const [clearing, setClearing] = useState(false);
 
   const pariticipant = participants[roomId!];
   const room = roomsById[roomId!];
@@ -25,6 +31,21 @@ const ChatHeader = ({ roomId }: { roomId: string }) => {
       isBlockedByMe: blocked,
       messagingDisabled: blocked,
     } as ChatRoom);
+  };
+
+  // "Clear chat" wipes the conversation from this user's view only (per-user
+  // cutoff on the backend); the other participant keeps the full history.
+  const handleClearChat = async () => {
+    try {
+      setClearing(true);
+      await api.delete(ENDPOINTS.CHAT.CLEAR_CHAT(roomId));
+      clearMessagesInRoom(roomId);
+      setClearOpen(false);
+    } catch {
+      // The axios interceptor already surfaces a toast on failure.
+    } finally {
+      setClearing(false);
+    }
   };
 
   return (
@@ -82,6 +103,7 @@ const ChatHeader = ({ roomId }: { roomId: string }) => {
             userId={pariticipant._id}
             isBlockedByMe={room?.isBlockedByMe}
             onBlockChange={handleBlockChange}
+            onClearChat={() => setClearOpen(true)}
           />
         )}
       </div>
@@ -89,6 +111,16 @@ const ChatHeader = ({ roomId }: { roomId: string }) => {
       {searchOpen && (
         <ChatSearch roomId={roomId} onClose={() => setSearchOpen(false)} />
       )}
+
+      <ConfirmDialog
+        isOpen={clearOpen}
+        onClose={() => setClearOpen(false)}
+        onConfirm={handleClearChat}
+        loading={clearing}
+        title="Clear chat?"
+        description="This removes the conversation history from your view only. The other person will still see it."
+        confirmText="Clear chat"
+      />
     </div>
   );
 };

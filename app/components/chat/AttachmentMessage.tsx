@@ -6,9 +6,10 @@ import dayjs from "dayjs";
 import { motion } from "framer-motion";
 import { AttachmentTypes } from "@/app/types/enum";
 import { useState } from "react";
-import { FiCheck, FiCopy } from "react-icons/fi";
+import { FiCheck, FiCopy, FiSlash } from "react-icons/fi";
 import { toast } from "sonner";
 import SeenMessageText from "./SeenMessageText";
+import MessageActionsMenu from "./MessageActionsMenu";
 
 type Props = {
   message: Message;
@@ -115,8 +116,10 @@ const AttachmentMessage = ({
           isMe ? "items-end" : "items-start",
         )}
       >
-        <div className="relative flex items-center gap-2">
-          {hasContent && (
+        <div className="relative flex items-center gap-1">
+          <MessageActionsMenu message={message} isMe={isMe} />
+
+          {!message.isDeleted && hasContent && (
             <button
               onClick={handleCopy}
               className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-full hover:bg-content3/50 text-foreground/40 hover:text-foreground/80"
@@ -130,25 +133,33 @@ const AttachmentMessage = ({
             </button>
           )}
 
-          <div
-            className={clsx(
-              "relative p-1 shadow-sm transition-all duration-500 overflow-hidden",
-              isMe
-                ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-none"
-                : "bg-content2 text-foreground rounded-2xl rounded-tl-none border border-divider/5",
-              isHighlighted && "ring-2 ring-primary ring-offset-2",
-            )}
-          >
-            <div className="w-full min-w-[200px]">{renderAttachment()}</div>
+          {message.isDeleted ? (
+            <div className="px-3 py-1.5 rounded-2xl bg-content2 border border-divider/5 text-foreground/50 italic">
+              <p className="text-[13px] leading-relaxed flex items-center gap-1.5">
+                <FiSlash size={13} /> This message was deleted
+              </p>
+            </div>
+          ) : (
+            <div
+              className={clsx(
+                "relative p-1 shadow-sm transition-all duration-500 overflow-hidden",
+                isMe
+                  ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-none"
+                  : "bg-content2 text-foreground rounded-2xl rounded-tl-none border border-divider/5",
+                isHighlighted && "ring-2 ring-primary",
+              )}
+            >
+              <div className="w-full min-w-[200px]">{renderAttachment()}</div>
 
-            {hasContent && (
-              <div className="px-3 py-2">
-                <p className="text-[13px] leading-relaxed break-words whitespace-pre-wrap">
-                  {message.content}
-                </p>
-              </div>
-            )}
-          </div>
+              {hasContent && (
+                <div className="px-3 py-2">
+                  <p className="text-[13px] leading-relaxed break-words whitespace-pre-wrap">
+                    {message.content}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div

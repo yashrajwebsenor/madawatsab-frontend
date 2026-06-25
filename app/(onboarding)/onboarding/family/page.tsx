@@ -35,8 +35,10 @@ const defaultValues = {
   familyType: FamilyTypes.joint,
   fatherName: "",
   fatherOccupation: "",
+  fatherContact: "",
   motherName: "",
   motherOccupation: "",
+  motherContact: "",
   country: "",
   state: "",
   city: "",
@@ -88,8 +90,10 @@ const page = () => {
           familyType: result?.familyType,
           fatherName: result?.fatherName,
           fatherOccupation: result?.fatherOccupation,
+          fatherContact: result?.fatherContact,
           motherName: result?.motherName,
           motherOccupation: result?.motherOccupation,
+          motherContact: result?.motherContact,
           aboutFamily: result?.aboutFamily,
 
           country: result?.country,
@@ -224,9 +228,23 @@ const page = () => {
                     />
                   )}
                 />
+                <Controller
+                  control={control}
+                  name="fatherContact"
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      label="FATHERS CONTACT NUMBER (OPTIONAL)"
+                      variant="underlined"
+                      placeholder="Enter Father Contact Number"
+                      isInvalid={!!errors.fatherContact}
+                      errorMessage={errors.fatherContact?.message}
+                    />
+                  )}
+                />
               </div>
 
-              <div className="grid sm:grid-cols-2">
+              <div className="grid gap-5 sm:grid-cols-2">
                 <Controller
                   control={control}
                   name="motherName"
@@ -252,6 +270,20 @@ const page = () => {
                       placeholder="Enter Mother Occupation"
                       isInvalid={!!errors.motherOccupation}
                       errorMessage={errors.motherOccupation?.message}
+                    />
+                  )}
+                />
+                <Controller
+                  control={control}
+                  name="motherContact"
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      label="MOTHERS CONTACT NUMBER (OPTIONAL)"
+                      variant="underlined"
+                      placeholder="Enter Mother Contact Number"
+                      isInvalid={!!errors.motherContact}
+                      errorMessage={errors.motherContact?.message}
                     />
                   )}
                 />

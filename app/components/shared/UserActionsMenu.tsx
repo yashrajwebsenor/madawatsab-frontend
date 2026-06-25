@@ -12,7 +12,7 @@ import {
 } from "@heroui/react";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { MdBlock, MdOutlineReport } from "react-icons/md";
-import { FiUnlock } from "react-icons/fi";
+import { FiUnlock, FiTrash2 } from "react-icons/fi";
 import api from "@/app/api/api";
 import ENDPOINTS from "@/app/api/endpoints";
 import ReportUserDialog from "./ReportUserDialog";
@@ -24,6 +24,9 @@ type Props = {
   onBlockChange?: (blocked: boolean) => void;
   iconSize?: number;
   triggerClassName?: string;
+  // When provided, a "Clear chat" item is shown (chat header only). Owner
+  // handles the confirm + clear.
+  onClearChat?: () => void;
 };
 
 const UserActionsMenu = ({
@@ -32,6 +35,7 @@ const UserActionsMenu = ({
   onBlockChange,
   iconSize = 20,
   triggerClassName,
+  onClearChat,
 }: Props) => {
   const [working, setWorking] = useState(false);
   // Whether the open report dialog should also block (Block & Report).
@@ -91,6 +95,8 @@ const UserActionsMenu = ({
         return openReport(false);
       case "block-report":
         return openReport(true);
+      case "clear-chat":
+        return onClearChat?.();
     }
   };
 
@@ -138,6 +144,16 @@ const UserActionsMenu = ({
                     Block &amp; Report
                   </DropdownItem>,
                 ]),
+            ...(onClearChat
+              ? [
+                  <DropdownItem
+                    key="clear-chat"
+                    startContent={<FiTrash2 size={18} />}
+                  >
+                    Clear chat
+                  </DropdownItem>,
+                ]
+              : []),
           ]}
         </DropdownMenu>
       </Dropdown>

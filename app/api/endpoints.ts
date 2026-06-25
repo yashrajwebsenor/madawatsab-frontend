@@ -93,10 +93,13 @@ const ENDPOINTS = {
     SEARCH_MESSAGES: (roomId: string) => `chats/${roomId}/messages/search`,
     MESSAGES_AROUND: (roomId: string, messageId: string) =>
       `chats/${roomId}/messages/around/${messageId}`,
+    DELETE_MESSAGE_FOR_ME: (roomId: string, messageId: string) =>
+      `chats/${roomId}/messages/${messageId}/me`,
+    CLEAR_CHAT: (roomId: string) => `chats/${roomId}/messages`,
   },
   NOTIFICATIONS: {
-    SUBSCRIBE: "notifications/subscribe-to-topic",
-    UNSUBSCRIBE: "notifications/unsubscribe-from-topic",
+    REGISTER: "notifications/register-token",
+    UNREGISTER: "notifications/unregister-token",
   },
   ATTACHMENTS: {
     UPLOAD: "attachments/upload",

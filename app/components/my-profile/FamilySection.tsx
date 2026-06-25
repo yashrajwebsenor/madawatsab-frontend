@@ -15,8 +15,10 @@ const defaultValues = {
   familyType: FamilyTypes.joint,
   fatherName: "",
   fatherOccupation: "",
+  fatherContact: "",
   motherName: "",
   motherOccupation: "",
+  motherContact: "",
   aboutFamily: "",
 };
 
@@ -43,8 +45,10 @@ const FamilySection = () => {
           familyType: result?.familyType,
           fatherName: result?.fatherName,
           fatherOccupation: result?.fatherOccupation,
+          fatherContact: result?.fatherContact,
           motherName: result?.motherName,
           motherOccupation: result?.motherOccupation,
+          motherContact: result?.motherContact,
           aboutFamily: result?.aboutFamily,
         });
       }
@@ -186,6 +190,12 @@ const fields = [
     placeholder: "Enter Father Occupation",
   },
   {
+    name: "fatherContact",
+    label: "FATHERS CONTACT NUMBER (OPTIONAL)",
+    type: "text",
+    placeholder: "Enter Father Contact Number",
+  },
+  {
     name: "motherName",
     label: "MOTHERS NAME",
     type: "text",
@@ -196,5 +206,11 @@ const fields = [
     label: "MOTHERS OCCUPATION",
     type: "text",
     placeholder: "Enter Mother Occupation",
+  },
+  {
+    name: "motherContact",
+    label: "MOTHERS CONTACT NUMBER (OPTIONAL)",
+    type: "text",
+    placeholder: "Enter Mother Contact Number",
   },
 ];
