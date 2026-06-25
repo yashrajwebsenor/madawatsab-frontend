@@ -1,12 +1,20 @@
 import { addToast } from "@heroui/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo } from "react";
 import api from "../api/api";
 import ENDPOINTS from "../api/endpoints";
 
+// Session-local map of ids the user toggled this session: id -> shortlisted.
+// Used as an optimistic overlay on top of the per-card `isShortlisted` flag the
+// list/profile APIs now send, so the bookmark icon flips instantly without a
+// dedicated shortlist-ids fetch or a full list refetch.
+type Overrides = Record<string, boolean>;
+
+const OVERRIDES_KEY = ["shortlist-overrides"];
+
 /**
- * Shared shortlist state: one cached id-set (so every card knows its
- * bookmarked state without per-card requests) + an optimistic toggle.
+ * Shared shortlist state. The source of truth is the per-card `isShortlisted`
+ * flag sent inline by every profile/list endpoint; this hook only layers an
+ * optimistic override for the just-toggled card and owns the toggle mutation.
  *
  * Shortlists are private — only "Shortlisted by Me" exists; the target is
  * never notified.
@@ -14,15 +22,14 @@ import ENDPOINTS from "../api/endpoints";
 const useShortlist = () => {
   const queryClient = useQueryClient();
 
-  const { data } = useQuery({
-    queryKey: ["shortlist-ids"],
-    queryFn: async (): Promise<string[]> => {
-      const res: any = await api.get(ENDPOINTS.SHORTLISTS.IDS);
-      return res?.data ?? [];
-    },
+  // No network — a purely client-side store seeded empty and mutated optimistically.
+  const { data: overrides } = useQuery<Overrides>({
+    queryKey: OVERRIDES_KEY,
+    queryFn: () => queryClient.getQueryData<Overrides>(OVERRIDES_KEY) ?? {},
+    staleTime: Infinity,
+    gcTime: Infinity,
+    initialData: {},
   });
-
-  const ids = useMemo(() => new Set(data ?? []), [data]);
 
   const { mutate: toggleShortlist, isPending: isToggling } = useMutation({
     mutationFn: async (targetId: string) => {
@@ -31,24 +38,30 @@ const useShortlist = () => {
       });
       return res as { shortlisted: boolean; message: string };
     },
-    // Flip the cached id optimistically so the bookmark icon responds
-    // instantly; roll back on failure.
+    // Flip the override optimistically so the bookmark icon responds instantly;
+    // roll back on failure.
     onMutate: async (targetId) => {
-      await queryClient.cancelQueries({ queryKey: ["shortlist-ids"] });
-      const previous = queryClient.getQueryData<string[]>(["shortlist-ids"]);
-      queryClient.setQueryData<string[]>(["shortlist-ids"], (old = []) =>
-        old.includes(targetId)
-          ? old.filter((id) => id !== targetId)
-          : [...old, targetId],
-      );
+      await queryClient.cancelQueries({ queryKey: OVERRIDES_KEY });
+      const previous =
+        queryClient.getQueryData<Overrides>(OVERRIDES_KEY) ?? {};
+      const current = previous[targetId] ?? false;
+      queryClient.setQueryData<Overrides>(OVERRIDES_KEY, {
+        ...previous,
+        [targetId]: !current,
+      });
       return { previous };
     },
     onError: (_error, _targetId, context) => {
       if (context?.previous) {
-        queryClient.setQueryData(["shortlist-ids"], context.previous);
+        queryClient.setQueryData(OVERRIDES_KEY, context.previous);
       }
     },
-    onSuccess: (result) => {
+    onSuccess: (result, targetId) => {
+      // Pin the override to the server's authoritative state.
+      queryClient.setQueryData<Overrides>(OVERRIDES_KEY, (old = {}) => ({
+        ...old,
+        [targetId]: !!result?.shortlisted,
+      }));
       addToast({
         color: "success",
         title: result?.shortlisted ? "Shortlisted" : "Removed",
@@ -60,14 +73,22 @@ const useShortlist = () => {
       });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["shortlist-ids"] });
-      // The Shortlisted activity tab must add/drop the toggled card.
+      // Refresh feeds so the inline `isShortlisted` flag becomes authoritative
+      // (the override stays as a same-value overlay until then).
+      queryClient.invalidateQueries({ queryKey: ["discover"] });
       queryClient.invalidateQueries({ queryKey: ["activity", "shortlist"] });
     },
   });
 
   return {
-    isShortlisted: (targetId?: string) => !!targetId && ids.has(targetId),
+    // Override wins when the user toggled this card this session; otherwise the
+    // inline server flag is the source of truth.
+    isShortlisted: (targetId?: string, serverValue?: boolean) => {
+      if (targetId && overrides && targetId in overrides) {
+        return overrides[targetId];
+      }
+      return !!serverValue;
+    },
     toggleShortlist,
     isToggling,
   };

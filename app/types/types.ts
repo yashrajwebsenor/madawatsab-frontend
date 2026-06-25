@@ -59,6 +59,10 @@ export interface User {
   // record to a neutral stub ("Deleted User", no photo/PII); the UI renders a
   // placeholder and disables all interactions.
   isDeleted?: boolean;
+  // Per-viewer flag: the current user has shortlisted this profile. Sent inline
+  // by every profile/list endpoint so cards render their bookmark state without
+  // a separate shortlist-ids request.
+  isShortlisted?: boolean;
   contactViewBalance?: number;
   contactViewLifetime?: number;
   subscription: Subscription;
@@ -280,6 +284,48 @@ export interface ActivityUnreadCounts {
   profile_visits: number;
   gallery_requests: number;
   contact_views: number;
+  total: number;
+}
+
+// ---- Notifications ----
+
+export type NotificationCategory =
+  | "interests"
+  | "messages"
+  | "visits"
+  | "gallery"
+  | "system";
+
+export type NotificationType =
+  | "interest_received"
+  | "interest_accepted"
+  | "gallery_request_received"
+  | "gallery_request_approved"
+  | "profile_visit"
+  | "new_message"
+  | "system";
+
+export interface AppNotification {
+  _id: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  // Precomputed in-app deep link the row/toast/push navigate to ("" = none).
+  route: string;
+  isRead: boolean;
+  createdAt: string;
+  // Populated actor (avatar/name); null/absent for system notifications.
+  actorId?: User | null;
+  data?: Record<string, any>;
+}
+
+// Per-category + total unread counts for the bell + notification tabs.
+export interface NotificationUnreadCounts {
+  interests: number;
+  messages: number;
+  visits: number;
+  gallery: number;
+  system: number;
   total: number;
 }
 

@@ -26,6 +26,7 @@ const routes = {
     details: (id: string) => `/matches/${id}`,
   },
   activity: "/activity",
+  notifications: "/notifications",
   message: {
     index: "/message",
     chat: (id: string) => `/message/${id}`,

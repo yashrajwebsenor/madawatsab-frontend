@@ -73,7 +73,6 @@ const ENDPOINTS = {
   SHORTLISTS: {
     TOGGLE: "shortlists/toggle",
     LIST: "shortlists",
-    IDS: "shortlists/ids",
   },
   INTERESTS: {
     SEND: "interests/send",
@@ -100,6 +99,9 @@ const ENDPOINTS = {
   NOTIFICATIONS: {
     REGISTER: "notifications/register-token",
     UNREGISTER: "notifications/unregister-token",
+    LIST: "notifications",
+    UNREAD_COUNTS: "notifications/unread-counts",
+    MARK_READ: "notifications/mark-read",
   },
   ATTACHMENTS: {
     UPLOAD: "attachments/upload",

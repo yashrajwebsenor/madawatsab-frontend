@@ -92,7 +92,7 @@ const MatchCard = ({
   };
 
   const { isShortlisted, toggleShortlist } = useShortlist();
-  const shortlisted = isShortlisted(_id);
+  const shortlisted = isShortlisted(_id, profile.isShortlisted);
 
   const handleShortlist = () => {
     if (_id) toggleShortlist(_id);

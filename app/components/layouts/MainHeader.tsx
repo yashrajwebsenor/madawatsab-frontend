@@ -36,6 +36,7 @@ import useSplashStore from "@/app/store/useSplashStore";
 import useSubscriptionAccess from "@/app/hooks/useSubscriptionAccess";
 import CommonUtils from "@/app/utils/common.utils";
 import DeleteAccountDialog from "../dialogs/DeleteAccountDialog";
+import NotificationBell from "../shared/NotificationBell";
 
 const accountLinks = [
   { key: "profile", label: "My Profile", icon: LuUser, href: routes.profile },
@@ -130,6 +131,7 @@ const MainHeader = () => {
               </span>
             )}
           </Button>
+          <NotificationBell />
           <UserMenu />
         </div>
 
@@ -150,6 +152,7 @@ const MainHeader = () => {
               </span>
             )}
           </Button>
+          <NotificationBell size={22} />
           <Button isIconOnly variant="light" onPress={onOpen} aria-label="Open menu">
             <FiMenu size={24} />
           </Button>

@@ -16,9 +16,42 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+// Notifications are sent data-only (no `notification` payload) so the browser
+// never auto-displays them. When the app is backgrounded/closed we render the
+// OS notification ourselves, stashing the deep-link route in its data so the
+// click handler below can open it.
 messaging.onBackgroundMessage((payload) => {
-  console.log(
-    "[firebase-messaging-sw.js] Received background message ",
-    payload,
+  const data = payload.data || {};
+  const title = data.title || "New notification";
+
+  self.registration.showNotification(title, {
+    body: data.body || "",
+    icon: "/assets/images/logo.png",
+    badge: "/assets/images/logo.png",
+    data: { route: data.route || "/" },
+  });
+});
+
+// Tapping the OS notification: focus an existing app tab (navigating it to the
+// route) or open a new one.
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  const route = (event.notification.data && event.notification.data.route) || "/";
+  const targetUrl = new URL(route, self.location.origin).href;
+
+  event.waitUntil(
+    self.clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((clientList) => {
+        for (const client of clientList) {
+          if ("focus" in client) {
+            client.focus();
+            if ("navigate" in client) client.navigate(targetUrl);
+            return;
+          }
+        }
+        if (self.clients.openWindow) return self.clients.openWindow(targetUrl);
+      }),
   );
 });

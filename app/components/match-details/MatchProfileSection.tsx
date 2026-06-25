@@ -55,7 +55,7 @@ const MatchProfileSection = ({
   const { hasActivePlan, hasContactCredits, contactViewBalance } =
     useSubscriptionAccess();
   const { isShortlisted, toggleShortlist } = useShortlist();
-  const shortlisted = isShortlisted(profile._id);
+  const shortlisted = isShortlisted(profile._id, profile.isShortlisted);
 
   const age = dayjs().diff(dayjs(profile?.dob), "years");
   const blurred = profile?.shouldBlur ?? profile?.isPrivate;
