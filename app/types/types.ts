@@ -291,7 +291,6 @@ export interface ActivityUnreadCounts {
 
 export type NotificationCategory =
   | "interests"
-  | "messages"
   | "visits"
   | "gallery"
   | "system";
@@ -322,7 +321,6 @@ export interface AppNotification {
 // Per-category + total unread counts for the bell + notification tabs.
 export interface NotificationUnreadCounts {
   interests: number;
-  messages: number;
   visits: number;
   gallery: number;
   system: number;

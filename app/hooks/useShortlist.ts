@@ -36,7 +36,13 @@ const useShortlist = () => {
       const res: any = await api.post(ENDPOINTS.SHORTLISTS.TOGGLE, {
         targetId,
       });
-      return res as { shortlisted: boolean; message: string };
+      // Backend envelope: `{ status, message, data: { shortlisted } }`. The
+      // ResponseInterceptor hoists the service `message` to the top level and
+      // nests the payload under `data`, so read both from their real spots.
+      return {
+        shortlisted: !!res?.data?.shortlisted,
+        message: res?.message,
+      } as { shortlisted: boolean; message: string };
     },
     // Flip the override optimistically so the bookmark icon responds instantly;
     // roll back on failure.

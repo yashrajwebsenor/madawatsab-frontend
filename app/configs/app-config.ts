@@ -14,14 +14,15 @@ const APP_CONFIG = {
       : process.env.NEXT_PUBLIC_RAZORPAY_LIVE_KEY_SECRET,
 
   FIREBASE: {
-    apiKey: "AIzaSyBol2t4I_34qxeF2XlCxVmL-9n1-KumsqM",
-    authDomain: "madawatsab-1a60f.firebaseapp.com",
-    projectId: "madawatsab-1a60f",
-    storageBucket: "madawatsab-1a60f.firebasestorage.app",
-    messagingSenderId: "829547727743",
-    appId: "1:829547727743:web:c55fceae2b87a2d9c3a84a",
+    apiKey: "AIzaSyBohDMv0Dh6ExQPSqOk3JL1FfkiyQEiBcs",
+    authDomain: "madawatsab-8640d.firebaseapp.com",
+    projectId: "madawatsab-8640d",
+    storageBucket: "madawatsab-8640d.firebasestorage.app",
+    messagingSenderId: "821286014901",
+    appId: "1:821286014901:web:1445aa752e15d88b6213fc",
+    measurementId: "G-30RDLCBQ2F",
     vapidKey:
-      "BL23ouHMOtrk9xAont6ktYLH5ZbLJBUKqkd7EcKaj11S8hV3M0X7OhMNyeLCqWQZVWnOo_bZ45gzCZrbZyWx9JA",
+      "BIUkv5jZnjx00wJdCUwzC5wF8AGP_EMwlFGmrWslYeb-g4l6vaAe7vu95lN5acBaEN3_7XZfnIx0kB887vzcWcQ",
   },
 };
 

@@ -6,12 +6,12 @@ importScripts(
 );
 
 firebase.initializeApp({
-  apiKey: "AIzaSyBol2t4I_34qxeF2XlCxVmL-9n1-KumsqM",
-  authDomain: "madawatsab-1a60f.firebaseapp.com",
-  projectId: "madawatsab-1a60f",
-  storageBucket: "madawatsab-1a60f.firebasestorage.app",
-  messagingSenderId: "829547727743",
-  appId: "1:829547727743:web:c55fceae2b87a2d9c3a84a",
+  apiKey: "AIzaSyBohDMv0Dh6ExQPSqOk3JL1FfkiyQEiBcs",
+  authDomain: "madawatsab-8640d.firebaseapp.com",
+  projectId: "madawatsab-8640d",
+  storageBucket: "madawatsab-8640d.firebasestorage.app",
+  messagingSenderId: "821286014901",
+  appId: "1:821286014901:web:1445aa752e15d88b6213fc",
 });
 
 const messaging = firebase.messaging();
@@ -28,6 +28,11 @@ messaging.onBackgroundMessage((payload) => {
     body: data.body || "",
     icon: "/assets/images/logo.png",
     badge: "/assets/images/logo.png",
+    // Same tag => a new push from the same source (e.g. a busy chat thread)
+    // replaces the previous tray entry instead of stacking; renotify still
+    // alerts the user to the new one.
+    tag: data.collapseKey || undefined,
+    renotify: Boolean(data.collapseKey),
     data: { route: data.route || "/" },
   });
 });

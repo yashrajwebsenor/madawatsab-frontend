@@ -63,10 +63,11 @@ const TYPE_META: Record<
   },
 };
 
+// Messages are push-only (not stored in the feed) — the chat list already
+// tracks message unread — so there is no Messages tab here.
 const TABS = [
   { key: "all", label: "All" },
   { key: "interests", label: "Interests" },
-  { key: "messages", label: "Messages" },
   { key: "visits", label: "Visits" },
   { key: "gallery", label: "Gallery" },
   { key: "system", label: "System" },
@@ -76,7 +77,6 @@ const TABS = [
 const TAB_UNREAD_FIELD: Record<string, keyof NotificationUnreadCounts> = {
   all: "total",
   interests: "interests",
-  messages: "messages",
   visits: "visits",
   gallery: "gallery",
   system: "system",

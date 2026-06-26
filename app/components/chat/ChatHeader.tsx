@@ -64,22 +64,46 @@ const ChatHeader = ({ roomId }: { roomId: string }) => {
         >
           <LuChevronLeft size={22} />
         </Button>
-        <Avatar
-          isBordered
-          color="primary"
-          name={pariticipant?.fullName}
-          src={pariticipant?.profilePhoto?.url}
-          className={clsx(
-            "w-8 h-8 text-large ring-2 ring-offset-2 ring-transparent group-hover:ring-primary/20 transition-all",
-            { "blur-[2px]": pariticipant?.shouldBlur ?? pariticipant?.isPrivate },
-          )}
-        />
-        <div className="flex flex-col items-start">
-          <p className="font-medium text-gray-800 text-sm">
-            {pariticipant?.fullName}
-          </p>
-          <p className="text-xs text-gray-400">{pariticipant?.occupation}</p>
-        </div>
+        {/* Tap the peer's avatar/name to open their profile. A self-deleted
+            peer has no profile to view, so render it non-clickable. */}
+        {(() => {
+          const peer = (
+            <>
+              <Avatar
+                isBordered
+                color="primary"
+                name={pariticipant?.fullName}
+                src={pariticipant?.profilePhoto?.url}
+                className={clsx(
+                  "w-8 h-8 text-large ring-2 ring-offset-2 ring-transparent group-hover:ring-primary/20 transition-all",
+                  {
+                    "blur-[2px]":
+                      pariticipant?.shouldBlur ?? pariticipant?.isPrivate,
+                  },
+                )}
+              />
+              <div className="flex flex-col items-start">
+                <p className="font-medium text-gray-800 text-sm">
+                  {pariticipant?.fullName}
+                </p>
+                <p className="text-xs text-gray-400">
+                  {pariticipant?.occupation}
+                </p>
+              </div>
+            </>
+          );
+
+          return pariticipant?._id && !pariticipant?.isDeleted ? (
+            <Link
+              href={routes.matches.details(pariticipant._id)}
+              className="group flex items-center gap-2"
+            >
+              {peer}
+            </Link>
+          ) : (
+            <div className="flex items-center gap-2">{peer}</div>
+          );
+        })()}
       </div>
 
       <div className="flex items-center gap-1">
