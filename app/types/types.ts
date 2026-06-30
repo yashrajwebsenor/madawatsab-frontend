@@ -21,6 +21,9 @@ export interface User {
   userType: string;
   isOnboardingCompleted: boolean;
   isPrivate: boolean;
+  // Admin-granted trust marker. Renders a blue verified tick next to the
+  // user's name across the web panel (discovery cards, profile detail).
+  isVerified?: boolean;
   appLanguage: string;
   createdAt: string;
   annualIncome: string;

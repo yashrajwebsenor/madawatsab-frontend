@@ -363,7 +363,12 @@ const MatchProfileSection = ({
               <h1 className="text-2xl w-fit font-bold text-gray-900">
                 {CommonUtils.formatNameWithUserId(profile)}
               </h1>
-              <MdVerified className="text-blue-500 text-2xl" />
+              {profile?.isVerified && (
+                <MdVerified
+                  className="text-blue-500 text-2xl"
+                  aria-label="Verified"
+                />
+              )}
             </div>
             <p className="text-gray-500 mt-1 font-medium">
               {age} Years • {profile?.address?.cityName},{" "}

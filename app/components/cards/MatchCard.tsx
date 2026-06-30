@@ -17,6 +17,7 @@ import {
   IoLocationOutline,
 } from "react-icons/io5";
 import { TiHeartFullOutline } from "react-icons/ti";
+import { MdVerified } from "react-icons/md";
 import PrivateBadge from "../shared/PrivateBadge";
 import { InterestStatus } from "@/app/types/enum";
 import useShortlist from "@/app/hooks/useShortlist";
@@ -72,6 +73,7 @@ const MatchCard = ({
     isPrivate,
     shouldBlur,
     isDeleted,
+    isVerified,
   } = profile;
 
   // Backend decides blur via subscription + privacy. Fall back to isPrivate
@@ -189,8 +191,14 @@ const MatchCard = ({
 
       <div className="p-3 text-sm">
         <div className="flex items-center gap-2 justify-between">
-          <p className="font-medium">
+          <p className="font-medium inline-flex items-center gap-1">
             {CommonUtils.formatNameWithUserId({ fullName, userId })}
+            {isVerified && (
+              <MdVerified
+                className="text-blue-500 shrink-0"
+                aria-label="Verified"
+              />
+            )}
           </p>
 
           {isDeleted ? null : interestStatus === InterestStatus.declined ? (
