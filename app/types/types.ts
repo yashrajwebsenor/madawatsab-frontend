@@ -59,6 +59,15 @@ export interface User {
   // record to a neutral stub ("Deleted User", no photo/PII); the UI renders a
   // placeholder and disables all interactions.
   isDeleted?: boolean;
+  // User-initiated visibility pause. On the OWNER's profile this is the real
+  // toggle state (drives the pause/resume UI). On another member's profile it
+  // is only present (as a masked stub) via `isUnavailable` below — a connected
+  // viewer still receives the full, unmasked profile.
+  isPaused?: boolean;
+  // Set by the backend when a PAUSED member's profile is opened by someone who
+  // is NOT an existing connection: the record is masked to a neutral stub and
+  // the detail page shows a "currently unavailable" screen.
+  isUnavailable?: boolean;
   // Per-viewer flag: the current user has shortlisted this profile. Sent inline
   // by every profile/list endpoint so cards render their bookmark state without
   // a separate shortlist-ids request.

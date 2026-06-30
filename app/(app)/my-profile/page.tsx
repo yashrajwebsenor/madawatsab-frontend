@@ -5,6 +5,7 @@ import FamilySection from "@/app/components/my-profile/FamilySection";
 import LifestyleSection from "@/app/components/my-profile/LifestyleSection";
 import MembershipCard from "@/app/components/my-profile/MembershipCard";
 import MyProfileDetailsCard from "@/app/components/my-profile/MyProfileDetails";
+import PauseAccountCard from "@/app/components/account/PauseAccountCard";
 import PersonalInformation from "@/app/components/my-profile/PersonalInformation";
 import ProfilePhotoSection from "@/app/components/my-profile/ProfilePhotoSection";
 import ReligiousSection from "@/app/components/my-profile/ReligiousSection";
@@ -47,6 +48,7 @@ const page = () => {
           </div>
           <div className="flex flex-col gap-7 lg:flex-1 lg:sticky lg:top-24">
             <MembershipCard />
+            <PauseAccountCard />
             <MyProfileDetailsCard />
           </div>
         </div>

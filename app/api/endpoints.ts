@@ -16,6 +16,7 @@ const ENDPOINTS = {
     DISCOVER: "/profile/discover",
     GET_BY_ID: (id: string) => `/profile/${id}`,
     COMPATIBILITY: (id: string) => `/profile/${id}/compatibility`,
+    PAUSE: "/profile/pause",
     DELETE_ACCOUNT: "/profile/me",
   },
   AGENTS: {

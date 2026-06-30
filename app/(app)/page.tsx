@@ -9,6 +9,8 @@ import api from "../api/api";
 import { Match } from "../types/types";
 import { MatchGridSkeleton } from "../components/shared/Skeletons";
 import AdvertisementCard from "../components/cards/AdvertisementCard";
+import PausedDiscoveryNotice from "../components/account/PausedDiscoveryNotice";
+import useUserStore from "../store/useUserStore";
 
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -20,6 +22,10 @@ const page = () => {
   const searchParams = useSearchParams();
   const filters = Object.fromEntries(searchParams.entries());
   const [tab, setTab] = useState<DiscoverTab>("discover");
+  // Paused users can't browse discovery — they see a "paused" screen instead of
+  // the feed. Read from the store (refreshed on app load) so it stays in sync
+  // with the My Profile toggle and the resume button on the notice itself.
+  const isPaused = useUserStore((s) => !!s.user?.isPaused);
 
   const {
     data,
@@ -32,6 +38,9 @@ const page = () => {
     // tab is part of the key so each tab keeps its own snapshot and refetches
     // when switched — the Online list is intentionally not live-updated.
     queryKey: ["discover", tab, filters],
+    // No point hitting the (guarded) feed while paused — the backend returns an
+    // empty list anyway.
+    enabled: !isPaused,
     initialPageParam: 1,
     queryFn: async ({ pageParam }) => {
       const res: any = await api.get(ENDPOINTS.PROFILE.DISCOVER, {
@@ -88,6 +97,17 @@ const page = () => {
     );
     observerRef.current.observe(node);
   }, []);
+
+  if (isPaused) {
+    return (
+      <div>
+        <HomeHeadSection />
+        <div className="container py-5">
+          <PausedDiscoveryNotice />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>

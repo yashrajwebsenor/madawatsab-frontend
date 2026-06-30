@@ -12,7 +12,7 @@ import LockedContent from "@/app/components/shared/LockedContent";
 import useSubscriptionAccess from "@/app/hooks/useSubscriptionAccess";
 import { useQuery } from "@tanstack/react-query";
 import { Avatar } from "@heroui/react";
-import { LuUserX } from "react-icons/lu";
+import { LuUserX, LuEyeOff } from "react-icons/lu";
 
 const page = ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = use(params);
@@ -47,6 +47,24 @@ const page = ({ params }: { params: Promise<{ id: string }> }) => {
             <p className="text-lg font-semibold">Deleted User</p>
             <p className="mt-1 text-sm text-default-500">
               This profile is no longer available.
+            </p>
+          </div>
+        </div>
+      ) : data?.isUnavailable ? (
+        // The member paused their account and the viewer isn't an existing
+        // connection: the backend masked the record, so show a neutral
+        // "unavailable" screen with no fields or actions.
+        <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
+          <Avatar
+            size="lg"
+            radius="full"
+            icon={<LuEyeOff className="text-3xl" />}
+            classNames={{ base: "bg-default-200 text-default-500 w-20 h-20" }}
+          />
+          <div>
+            <p className="text-lg font-semibold">Member unavailable</p>
+            <p className="mt-1 text-sm text-default-500">
+              This profile isn&apos;t available right now.
             </p>
           </div>
         </div>

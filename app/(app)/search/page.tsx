@@ -19,6 +19,8 @@ import DiscoverFilters, {
   Filters,
 } from "@/app/components/home/DiscoverFilters";
 import useSubscriptionAccess from "@/app/hooks/useSubscriptionAccess";
+import useUserStore from "@/app/store/useUserStore";
+import PausedDiscoveryNotice from "@/app/components/account/PausedDiscoveryNotice";
 
 // The three identifiers the platform can be searched by (client spec 2.1).
 // `userId` already existed as a discover filter; `fullName` + `mobile` are the
@@ -63,6 +65,9 @@ const normalise = (by: SearchBy, raw: string) => {
 const SearchPage = () => {
   const router = useRouter();
   const { canUseAdvancedFilters } = useSubscriptionAccess();
+  // Paused users opt out of browsing entirely — search is part of discovery, so
+  // it shows the same "paused" screen instead of a search box.
+  const isPaused = useUserStore((s) => !!s.user?.isPaused);
 
   const [searchBy, setSearchBy] = useState<SearchBy>("userId");
   const [term, setTerm] = useState("");
@@ -92,7 +97,8 @@ const SearchPage = () => {
     [appliedFilters, canUseAdvancedFilters],
   );
 
-  const enabled = canUseAdvancedFilters && submitted.length >= MIN_CHARS;
+  const enabled =
+    canUseAdvancedFilters && !isPaused && submitted.length >= MIN_CHARS;
 
   const {
     data,
@@ -152,6 +158,26 @@ const SearchPage = () => {
   }, [canUseAdvancedFilters, router]);
 
   if (!canUseAdvancedFilters) return null;
+
+  if (isPaused) {
+    return (
+      <div className="container py-5">
+        <div className="mb-4 flex items-center gap-3">
+          <Button
+            isIconOnly
+            variant="light"
+            radius="full"
+            aria-label="Back"
+            onPress={() => router.back()}
+          >
+            <LuArrowLeft size={20} />
+          </Button>
+          <h1 className="text-xl font-semibold">Search members</h1>
+        </div>
+        <PausedDiscoveryNotice />
+      </div>
+    );
+  }
 
   const field = SEARCH_FIELDS[searchBy];
 
