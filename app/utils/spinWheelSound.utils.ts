@@ -25,13 +25,6 @@ const getAudioContext = (): AudioContext | null => {
 // not fatal, but re-check this if upgrading the package.
 const PHASE_UNIT_MS = { start: 2600, continue: 750, stop: 8000 };
 
-// Subtle by design — a soft whoosh under the wheel, not a sound effect that
-// competes with it.
-const PEAK_GAIN = 0.09;
-const QUIET_HZ = 280;
-const BRIGHT_HZ = 950;
-const RELEASE_SEC = 0.08;
-
 /** The wheel's real total spin time for a given `spinDuration` prop value. */
 export const getSpinTotalDurationMs = (spinDuration: number) => {
   const factor = Math.max(0.01, spinDuration);
@@ -41,15 +34,106 @@ export const getSpinTotalDurationMs = (spinDuration: number) => {
   );
 };
 
+// Modeled on a physical ratchet/peg wheel (prize-wheel clicker), not a
+// whoosh: discrete noise-burst clicks, near-silence between them, ringing at
+// one dominant pitch. Click *rate* (not interval) is what's interpolated
+// linearly across the ramp/decel phases — that's what constant angular
+// acceleration/deceleration looks like, so intervals naturally stretch out
+// (hyperbolically) as the wheel slows, matching how a real peg wheel sounds.
+const CLICK_HZ = 5600;
+const CLICK_RING_SEC = 0.02;
+const CLICK_PEAK_GAIN = 0.35;
+const START_CLICK_RATE = 3; // clicks/sec at the very start of the ramp-up
+const TOP_CLICK_RATE = 9.6; // clicks/sec while cruising at full speed
+const END_CLICK_RATE = 1.6; // clicks/sec right before the wheel stops
+
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+
+let clickNoiseBuffer: AudioBuffer | null = null;
+
+const getClickNoiseBuffer = (ctx: AudioContext): AudioBuffer => {
+  if (!clickNoiseBuffer || clickNoiseBuffer.sampleRate !== ctx.sampleRate) {
+    // A short noise burst is enough to excite the bandpass below into a
+    // ring at its center frequency — this buffer isn't "the click sound",
+    // it's just the impulse that drives one.
+    clickNoiseBuffer = ctx.createBuffer(
+      1,
+      Math.ceil(ctx.sampleRate * CLICK_RING_SEC),
+      ctx.sampleRate,
+    );
+    const data = clickNoiseBuffer.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+  }
+  return clickNoiseBuffer;
+};
+
+/** Schedules one peg click at `time` (an AudioContext timestamp). */
+const playClick = (ctx: AudioContext, time: number): AudioBufferSourceNode => {
+  const source = ctx.createBufferSource();
+  source.buffer = getClickNoiseBuffer(ctx);
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = "bandpass";
+  filter.frequency.value = CLICK_HZ * (0.95 + Math.random() * 0.1);
+  filter.Q.value = 14 + Math.random() * 6;
+
+  const gain = ctx.createGain();
+  const peak = CLICK_PEAK_GAIN * (0.8 + Math.random() * 0.2);
+  gain.gain.setValueAtTime(0, time);
+  gain.gain.linearRampToValueAtTime(peak, time + 0.001);
+  gain.gain.exponentialRampToValueAtTime(0.0001, time + CLICK_RING_SEC);
+
+  source.connect(filter);
+  filter.connect(gain);
+  gain.connect(ctx.destination);
+
+  source.start(time);
+  source.stop(time + CLICK_RING_SEC + 0.01);
+
+  return source;
+};
+
+/** Click offsets (seconds from spin start) across the wheel's three phases. */
+const buildClickSchedule = (
+  startSec: number,
+  continueSec: number,
+  stopSec: number,
+): number[] => {
+  const offsets: number[] = [];
+  // `t` deliberately isn't snapped back to each phase boundary — the previous
+  // phase's last step naturally overshoots it by a few ms, and re-aligning
+  // would shove two clicks close enough together to sound like a stutter.
+  let t = 0;
+
+  while (t < startSec) {
+    offsets.push(t);
+    t += 1 / lerp(START_CLICK_RATE, TOP_CLICK_RATE, t / startSec);
+  }
+
+  const holdEnd = startSec + continueSec;
+  while (t < holdEnd) {
+    offsets.push(t);
+    t += 1 / TOP_CLICK_RATE;
+  }
+
+  const end = holdEnd + stopSec;
+  while (t < end) {
+    offsets.push(t);
+    const progress = Math.max(0, (t - holdEnd) / stopSec);
+    t += 1 / lerp(TOP_CLICK_RATE, END_CLICK_RATE, progress);
+  }
+
+  return offsets;
+};
+
 /**
- * Plays one continuous, smooth spinning sound synced to the wheel's three
- * real motion phases — a soft filtered-noise whoosh that fades in and
- * brightens through the ramp-up, holds steady through the brief top-speed
- * phase, then dims and fades back to silence through the long
- * decelerate-to-stop phase (react-custom-roulette's `onStopSpinning` fires at
- * the same total time computed here). No discrete ticks/clicks — just one
- * smooth swell and release. Returns a cancel function for early interruption
- * (component unmount, navigating away mid-spin).
+ * Plays a ratchet/peg-wheel click sequence synced to the wheel's three real
+ * motion phases — clicks accelerate through the ramp-up, hold at a steady
+ * rate through the brief top-speed phase, then decelerate across the long
+ * stop phase down to a near-standstill (react-custom-roulette's
+ * `onStopSpinning` fires at the same total time computed here). Returns a
+ * cancel function for early interruption (component unmount, navigating away
+ * mid-spin).
  */
 export const playSpinSound = (spinDuration: number): (() => void) => {
   const ctx = getAudioContext();
@@ -61,51 +145,18 @@ export const playSpinSound = (spinDuration: number): (() => void) => {
   const stopSec = (PHASE_UNIT_MS.stop * factor) / 1000;
 
   const now = ctx.currentTime;
-  const holdStart = now + startSec;
-  const holdEnd = holdStart + continueSec;
-  const end = holdEnd + stopSec;
-
-  // Continuous soft noise bed — a lowpass filter's cutoff sweeping up then
-  // down is what makes it read as "spinning up / winding down" rather than a
-  // flat hiss.
-  const buffer = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
-
-  const noise = ctx.createBufferSource();
-  noise.buffer = buffer;
-  noise.loop = true;
-
-  const filter = ctx.createBiquadFilter();
-  filter.type = "lowpass";
-  filter.Q.value = 0.6;
-  filter.frequency.setValueAtTime(QUIET_HZ, now);
-  filter.frequency.linearRampToValueAtTime(BRIGHT_HZ, holdStart);
-  filter.frequency.setValueAtTime(BRIGHT_HZ, holdEnd);
-  filter.frequency.linearRampToValueAtTime(QUIET_HZ, end);
-
-  const gain = ctx.createGain();
-  gain.gain.setValueAtTime(0, now);
-  gain.gain.linearRampToValueAtTime(PEAK_GAIN, Math.min(holdStart, now + 0.4));
-  gain.gain.setValueAtTime(PEAK_GAIN, holdEnd);
-  gain.gain.linearRampToValueAtTime(0, end);
-
-  noise.connect(filter);
-  filter.connect(gain);
-  gain.connect(ctx.destination);
-
-  noise.start(now);
-  noise.stop(end + RELEASE_SEC);
+  const sources = buildClickSchedule(startSec, continueSec, stopSec).map(
+    (offset) => playClick(ctx, now + offset),
+  );
 
   return () => {
     const t = ctx.currentTime;
-    try {
-      gain.gain.cancelScheduledValues(t);
-      gain.gain.setValueAtTime(gain.gain.value, t);
-      gain.gain.linearRampToValueAtTime(0, t + RELEASE_SEC);
-      noise.stop(t + RELEASE_SEC);
-    } catch {
-      // Already stopped — nothing to clean up.
-    }
+    sources.forEach((source) => {
+      try {
+        source.stop(t);
+      } catch {
+        // Already stopped — nothing to clean up.
+      }
+    });
   };
 };
