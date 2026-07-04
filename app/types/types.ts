@@ -48,9 +48,12 @@ export interface User {
   // The entry gate checks this, not isEntryFeePaid.
   hasAppAccess: boolean;
   spinReward: string;
-  // Permanent spin-step-resolved flag (spun, skipped, or waived while disabled).
+  // Permanent spin-step-resolved flag (spun, or waived while disabled).
   // The spin gate checks this, not spinReward.
   spinResolved: boolean;
+  // Rupee amount won from a partial-discount spin; subtracted from the entry
+  // fee at checkout. Zero once spent or if the user won free entry outright.
+  entryFeeDiscount: number;
   address: Address;
   family: Family | null;
   assignedAgent: string | null;
@@ -167,6 +170,16 @@ export interface DialogProps {
   onClose: () => void;
   data?: any;
   refetch?: () => void;
+}
+
+// One admin-configured spin-wheel outcome, as returned by GET /configs
+// (parsed from the spinWheelSegments JSON string). No probability — odds
+// aren't the client's business.
+export interface SpinSegment {
+  label: string;
+  type: "discount" | "free_entry";
+  amount: number;
+  color?: string;
 }
 
 export interface Plan {

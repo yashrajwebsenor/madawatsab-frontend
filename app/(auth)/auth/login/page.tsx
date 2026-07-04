@@ -73,13 +73,18 @@ const page = () => {
               {...field}
               size="lg"
               autoFocus
-              type="number"
+              type="text"
+              inputMode="numeric"
+              maxLength={10}
               placeholder="987432103"
               labelPlacement="outside"
               label="Enter Mobile Number"
               isInvalid={!!errors?.mobile}
               errorMessage={errors?.mobile?.message}
               startContent={<FaPhoneAlt className="text-gray-400" />}
+              onChange={(ev) =>
+                field.onChange(ev.target.value.replace(/\D/g, "").slice(0, 10))
+              }
             />
           )}
         />

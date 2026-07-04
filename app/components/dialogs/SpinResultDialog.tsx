@@ -1,4 +1,3 @@
-import { DialogProps } from "@/app/types/types";
 import {
   Modal,
   ModalContent,
@@ -8,21 +7,28 @@ import {
   Button,
 } from "@heroui/react";
 
-const SpinResultDialog = ({ isOpen, onClose, data }: DialogProps) => {
-  const isWinner = data && data.includes("Coins");
+interface Props {
+  isOpen: boolean;
+  onClose: () => void;
+  freeEntry: boolean;
+  amount: number;
+}
 
+const SpinResultDialog = ({ isOpen, onClose, freeEntry, amount }: Props) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose} placement="center" backdrop="blur">
       <ModalContent>
         {(onClose) => (
           <>
             <ModalHeader className="flex flex-col gap-1 text-center text-2xl font-serif text-primary">
-              {isWinner ? "Congratulations!" : "Oops!"}
+              Congratulations!
             </ModalHeader>
             <ModalBody className="flex flex-col items-center py-6">
-              <div className="text-6xl mb-4">{isWinner ? "🎉" : "😔"}</div>
+              <div className="text-6xl mb-4">🎉</div>
               <p className="text-xl font-medium text-center">
-                {isWinner ? `You won ${data}!` : data}
+                {freeEntry
+                  ? "You won Free Entry! No entry fee needed."
+                  : `You won ₹${amount} off your entry fee!`}
               </p>
             </ModalBody>
             <ModalFooter className="flex justify-center w-full">

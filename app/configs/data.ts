@@ -1,4 +1,5 @@
 import routes from "./route-paths";
+import { SpinSegment } from "../types/types";
 
 export const authWidgets = [
   {
@@ -126,37 +127,16 @@ export const musicTypes = [
   { title: "Devotional", value: "Devotional" },
 ];
 
-export const spinWheelData = [
-  {
-    key: "free-access",
-    option: "Free Access",
-    style: { backgroundColor: "#f97316", textColor: "white" },
-  },
-  {
-    key: "small-reward",
-    option: "Small Reward",
-    style: { backgroundColor: "#3b82f6", textColor: "white" },
-  },
-  {
-    key: "profile-boost",
-    option: "Profile Boost",
-    style: { backgroundColor: "#ef4444", textColor: "white" },
-  },
-  {
-    key: "free-access-2",
-    option: "Free Access",
-    style: { backgroundColor: "#10b981", textColor: "white" },
-  },
-  {
-    key: "extra-matches",
-    option: "Extra Matches",
-    style: { backgroundColor: "#8b5cf6", textColor: "white" },
-  },
-  {
-    key: "50% discount",
-    option: "50% Discount",
-    style: { backgroundColor: "#eab308", textColor: "white" },
-  },
+// Used only until the real config (GET /configs -> spinWheelSegments) has
+// loaded — the wheel always renders the admin-configured segments once
+// available.
+export const fallbackSpinSegments: SpinSegment[] = [
+  { label: "FREE ENTRY", type: "free_entry", amount: 0, color: "#f97316" },
+  { label: "₹2 OFF", type: "discount", amount: 2, color: "#3b82f6" },
+  { label: "₹5 OFF", type: "discount", amount: 5, color: "#ef4444" },
+  { label: "₹1 OFF", type: "discount", amount: 1, color: "#10b981" },
+  { label: "₹3 OFF", type: "discount", amount: 3, color: "#8b5cf6" },
+  { label: "FREE ENTRY", type: "free_entry", amount: 0, color: "#eab308" },
 ];
 
 export const navigations = [

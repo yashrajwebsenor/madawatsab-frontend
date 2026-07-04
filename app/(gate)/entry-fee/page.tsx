@@ -25,7 +25,11 @@ const page = () => {
   const { config } = useConfigStore();
   const { getMyProfile } = useProfile();
   const [loading, setLoading] = useState(false);
-  const amount = Number(config?.appEntryFee ?? 0);
+  const baseFee = Number(config?.appEntryFee ?? 0);
+  // Discount won on the spin wheel; mirrors the ₹1 floor payment.service
+  // applies server-side (display-only — the server resolves the real charge).
+  const discount = Number(user?.entryFeeDiscount ?? 0);
+  const amount = discount > 0 ? Math.max(1, baseFee - discount) : baseFee;
 
   useEffect(() => {
     // Leave the paywall unless it is actually pending (fee enabled and no
@@ -127,7 +131,7 @@ const page = () => {
           shadow="none"
           className="max-w-[600px] w-full p-5 sm:p-10 text-center"
         >
-          <OnboardingHeader step={6} />
+          <OnboardingHeader step={7} />
 
           <div className="mt-10 flex flex-col items-center w-full">
             <div className="bg-[#eefcf4] p-3 rounded-xl mb-6">
@@ -138,12 +142,22 @@ const page = () => {
               <p className="text-[10px] uppercase tracking-[0.3em] font-bold opacity-80 mb-2">
                 Total Amount
               </p>
+              {discount > 0 && (
+                <span className="text-sm font-medium opacity-70 line-through mb-1">
+                  Rs. {baseFee}
+                </span>
+              )}
               <div className="flex items-baseline gap-2">
                 <span className="text-xl font-medium opacity-90">Rs.</span>
                 <span className="text-6xl font-bold leading-none">
                   {amount}
                 </span>
               </div>
+              {discount > 0 && (
+                <p className="text-xs font-medium opacity-80 mt-2">
+                  🎉 ₹{discount} off applied from your spin
+                </p>
+              )}
             </div>
 
             <Button
