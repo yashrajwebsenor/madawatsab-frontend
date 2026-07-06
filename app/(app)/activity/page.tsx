@@ -33,6 +33,7 @@ import {
   ContactView,
   GalleryRequestItem,
   Interest,
+  PartnerRecommendation,
   ProfileVisit,
   Shortlist,
   User,
@@ -48,7 +49,14 @@ import PrivateBadge from "@/app/components/shared/PrivateBadge";
 dayjs.extend(relativeTime);
 
 type SortKey = "recent" | "oldest";
-type Mode = "all" | "interest" | "visits" | "contact" | "shortlist" | "gallery";
+type Mode =
+  | "all"
+  | "interest"
+  | "visits"
+  | "contact"
+  | "shortlist"
+  | "gallery"
+  | "recommendations";
 
 // Per-type presentation for the merged All feed: a colored icon badge + the
 // line describing what happened. Keeps the feed a single chronological list
@@ -118,6 +126,7 @@ const TABS = [
   { key: "gallery_requests", label: "Gallery Requests" },
   { key: "contact_views", label: "Contact Views" },
   { key: "shortlisted", label: "Shortlisted" },
+  { key: "recommendations", label: "Recommendations" },
 ];
 
 // Sub-filter pills per tab. Key drives the query; first entry is the default.
@@ -156,6 +165,7 @@ const DATA_TABS = new Set([
   "gallery_requests",
   "contact_views",
   "shortlisted",
+  "recommendations",
 ]);
 
 const EMPTY_STATES: Record<string, { title: string; subtitle: string }> = {
@@ -168,6 +178,11 @@ const EMPTY_STATES: Record<string, { title: string; subtitle: string }> = {
     title: "No shortlists yet",
     subtitle:
       "Tap the bookmark icon on a profile to save it here for later.",
+  },
+  recommendations: {
+    title: "No recommendations yet",
+    subtitle:
+      "Profiles the admin hand-picks for you will show up here.",
   },
   profile_visits: {
     title: "No profile visits",
@@ -485,6 +500,20 @@ const ActivityPanel = ({
         }));
       }
 
+      if (mode === "recommendations") {
+        const res: any = await api.get(ENDPOINTS.RECOMMENDATIONS.LIST, {
+          params: { page, limit: 12 },
+        });
+        setTotalPages(res?.pagination?.totalPages);
+        return ((res?.data || []) as PartnerRecommendation[]).map((i) => ({
+          id: i._id,
+          profile: i.recommendedUserId,
+          canAcceptDecline: false,
+          canShortlistMessage: true,
+          canMessage: false,
+        }));
+      }
+
       if (mode === "visits") {
         const res: any = await api.get(ENDPOINTS.PROFILE_VISITS.LIST, {
           params: { page, limit: 12, type: subFilter },
@@ -585,7 +614,7 @@ const ActivityPanel = ({
             canAcceptDecline={row.canAcceptDecline}
             canShortlistMessage={row.canShortlistMessage}
             canMessage={row.canMessage}
-            canInterestSendReceive={false}
+            canInterestSendReceive={mode === "recommendations"}
           />
         ))}
       </div>
@@ -613,7 +642,9 @@ const page = () => {
             ? "shortlist"
             : activeTab === "gallery_requests"
               ? "gallery"
-              : "interest";
+              : activeTab === "recommendations"
+                ? "recommendations"
+                : "interest";
 
   // Unread badge counts (per-tab + total). Refetched, not socket-driven.
   const { data: unread } = useQuery({

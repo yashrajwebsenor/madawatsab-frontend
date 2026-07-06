@@ -76,8 +76,12 @@ const page = () => {
       }
       if (result?.user?.isOnboardingCompleted) {
         router.replace(routes.home);
-      } else {
+      } else if (result?.user?.assignedAgent) {
+        // Already linked to an agent (referral code applied on a previous
+        // attempt) — the one-time referral screen doesn't apply anymore.
         router.replace(routes.onboarding.step1);
+      } else {
+        router.replace(routes.auth.referralCode);
       }
     } catch (error) {
       console.log(error);

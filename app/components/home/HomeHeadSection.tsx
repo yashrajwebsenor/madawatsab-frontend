@@ -1,12 +1,28 @@
-import { Button, useDisclosure } from "@heroui/react";
-import PageHeaderWrapper from "../shared/PageHeaderWrapper";
+"use client";
+
+import { Button, Chip } from "@heroui/react";
+import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { GoPersonAdd } from "react-icons/go";
-import AgentRequestDrawer from "./AgentDrawer";
+import { FiPhone, FiUserCheck } from "react-icons/fi";
+import PageHeaderWrapper from "../shared/PageHeaderWrapper";
 import useUserStore from "@/app/store/useUserStore";
+import api from "@/app/api/api";
+import ENDPOINTS from "@/app/api/endpoints";
+import routes from "@/app/configs/route-paths";
 
 const HomeHeadSection = () => {
+  const router = useRouter();
   const { user } = useUserStore();
-  const { onOpen, isOpen, onOpenChange } = useDisclosure();
+
+  const { data: assignedAgent } = useQuery({
+    queryKey: ["assigned-agent"],
+    queryFn: async () => {
+      const res: any = await api.get(ENDPOINTS.AGENTS.ASSIGNED);
+      return res?.data ?? null;
+    },
+    enabled: !!user?.assignedAgent,
+  });
 
   return (
     <PageHeaderWrapper>
@@ -24,9 +40,32 @@ const HomeHeadSection = () => {
             </p>
           </div>
 
-          {!user?.assignedAgent && (
+          {user?.assignedAgent ? (
+            assignedAgent && (
+              <div className="flex items-center gap-3 bg-white/10 rounded-xl px-4 py-3">
+                <div className="bg-secondary/20 text-secondary p-2 rounded-lg">
+                  <FiUserCheck size={18} />
+                </div>
+                <div>
+                  <p className="text-white text-sm font-semibold">
+                    {assignedAgent.fullName}
+                  </p>
+                  <p className="text-gray-300 text-xs flex items-center gap-1">
+                    <FiPhone size={11} /> {assignedAgent.mobile}
+                  </p>
+                </div>
+                <Chip
+                  size="sm"
+                  variant="solid"
+                  className="bg-white text-primary font-semibold"
+                >
+                  Your Agent
+                </Chip>
+              </div>
+            )
+          ) : (
             <Button
-              onPress={onOpen}
+              onPress={() => router.push(routes.requestAgent)}
               color="secondary"
               variant="bordered"
               className="font-medium"
@@ -37,8 +76,6 @@ const HomeHeadSection = () => {
           )}
         </div>
       </div>
-
-      <AgentRequestDrawer isOpen={isOpen} onOpenChange={onOpenChange} />
     </PageHeaderWrapper>
   );
 };

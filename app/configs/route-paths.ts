@@ -8,10 +8,12 @@ const routes = {
   helpSupport: "/help-support",
   blockedUsers: "/blocked",
   search: "/search",
+  requestAgent: "/request-agent",
 
   auth: {
     login: "/auth/login",
     verifyOtp: "/auth/verify-otp",
+    referralCode: "/auth/referral-code",
   },
   onboarding: {
     step1: "/onboarding/steps/1",

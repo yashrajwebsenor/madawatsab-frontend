@@ -37,6 +37,7 @@ export enum FamilyTypes {
 export enum PaymentTypes {
   entry_fee = "entry_fee",
   plan = "plan",
+  request_agent = "request_agent",
 }
 
 export enum PlanDurationTypes {

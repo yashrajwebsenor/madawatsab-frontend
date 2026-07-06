@@ -20,7 +20,9 @@ const ENDPOINTS = {
   },
   AGENTS: {
     REQUEST: `users/agents/request`,
-    GET_BY_CITY: (cityId: number) => `users/agents/${cityId}`,
+    REQUEST_STATUS: "users/agents/request/status",
+    ASSIGNED: "users/agents/assigned",
+    APPLY_REFERRAL: "users/referral/apply",
   },
   FAMILY: {
     GET: "/family",
@@ -64,6 +66,9 @@ const ENDPOINTS = {
     UNREAD_COUNTS: "activity/unread-counts",
     MARK_READ: "activity/mark-read",
     ALL: "activity/all",
+  },
+  RECOMMENDATIONS: {
+    LIST: "users/recommendations",
   },
   GALLERY_REQUESTS: {
     SEND: "gallery-requests/send",

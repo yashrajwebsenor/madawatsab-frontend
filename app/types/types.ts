@@ -287,6 +287,15 @@ export interface GalleryRequestItem {
   profile: User;
 }
 
+// A partner recommendation the super admin sent (agent module, todo.txt:70) —
+// surfaced in the Activity "Recommendations" tab.
+export interface PartnerRecommendation {
+  _id: string;
+  recommendedUserId: User;
+  isSeen: boolean;
+  createdAt: string;
+}
+
 // A row in the merged All-tab feed: one of several received-activity types,
 // normalised by the backend so `profile` is always the other party.
 export type ActivityFeedType =
