@@ -50,6 +50,12 @@ const page = () => {
     return () => clearTimeout(t);
   }, []);
 
+  const handleChangeNumber = () => {
+    sessionStorage.removeItem("pending_mobile");
+    localStorage.removeItem("otpExpiryTime");
+    router.push(routes.auth.login);
+  };
+
   const onSubmit = handleSubmit(async (data) => {
     data.mobile = mobile;
     try {
@@ -92,6 +98,16 @@ const page = () => {
     <Card radius="lg" shadow="none" className="text-center p-5 sm:p-10">
       <h3 className="font-medium text-2xl">Sign in</h3>
       <p className="text-sm text-gray-400">Secure access to your account</p>
+      <p className="text-sm text-gray-500 mt-1">
+        OTP sent to {mobile}{" "}
+        <button
+          type="button"
+          onClick={handleChangeNumber}
+          className="text-primary font-medium"
+        >
+          Change Number
+        </button>
+      </p>
 
       <form onSubmit={onSubmit} className="my-7">
         <Controller

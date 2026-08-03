@@ -17,6 +17,7 @@ const MembershipCard = () => {
 
   // Only the capabilities the active plan includes are shown as chips.
   const capabilityChips = [
+    { label: "VVIP Status", enabled: capabilities?.isVvip },
     { label: "Messaging", enabled: capabilities?.canMessage },
     { label: "Advanced Filters", enabled: capabilities?.hasAdvancedFilters },
     { label: "Profile Boost", enabled: capabilities?.hasProfileBoost },

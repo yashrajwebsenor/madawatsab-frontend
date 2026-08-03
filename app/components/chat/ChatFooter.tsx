@@ -121,6 +121,12 @@ const ChatFooter = () => {
           : MessageTypes.image;
       }
 
+      if (!socketService.isConnected()) {
+        addToast({ color: "danger", title: "Reconnecting… please try sending again" });
+        socketService.reconnect();
+        return;
+      }
+
       socketService.emit(socketEvents.EMIT.SEND_MESSAGE, {
         roomId: id,
         content: message,

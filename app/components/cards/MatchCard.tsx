@@ -19,6 +19,8 @@ import {
 import { TiHeartFullOutline } from "react-icons/ti";
 import { MdVerified } from "react-icons/md";
 import PrivateBadge from "../shared/PrivateBadge";
+import PremiumBadge from "../shared/PremiumBadge";
+import VvipBadge from "../shared/VvipBadge";
 import { InterestStatus } from "@/app/types/enum";
 import useShortlist from "@/app/hooks/useShortlist";
 
@@ -62,23 +64,30 @@ const MatchCard = ({
 
   const {
     _id,
-    userId,
     profilePhoto,
     fullName,
     occupation,
     dob,
     qualification,
-    sect,
+    community,
     address,
     isPrivate,
+    isGalleryPrivate,
     shouldBlur,
     isDeleted,
     isVerified,
+    isPremium,
+    isVvip,
   } = profile;
 
+  // A deleted profile drops to the tombstone treatment — never gold it.
+  const vvip = !!isVvip && !isDeleted;
+
   // Backend decides blur via subscription + privacy. Fall back to isPrivate
-  // when the flag is absent (e.g. older responses).
-  const blurred = shouldBlur ?? isPrivate;
+  // (or a gallery-locked public profile) when the flag is absent (e.g. older
+  // responses).
+  const blurred = shouldBlur ?? (isPrivate || isGalleryPrivate);
+  const galleryLocked = isPrivate || isGalleryPrivate;
 
   const router = useRouter();
   const age = dayjs().diff(dayjs(dob), "years");
@@ -152,23 +161,49 @@ const MatchCard = ({
       as="div"
       isPressable={!isDeleted}
       shadow="none"
+      radius="none"
       onPress={handleCardClick}
-      className="border-none bg-white h-full hover:shadow-md transition-shadow duration-300"
+      className={clsx(
+        "border-none h-full transition-shadow duration-300 relative overflow-hidden",
+        vvip
+          ? "bg-gradient-to-b from-[#fdf7e6] to-[#f5e6b8] ring-1 ring-[#E9C349] motion-safe:animate-vvip-glow"
+          : "bg-white hover:shadow-md",
+      )}
     >
-      <div className="relative overflow-hidden">
+      {/* Gold sheen sweep. Sits above the card surface but below every control
+          (badges/bookmark are z-20) and is click-through, so it decorates
+          without ever intercepting a press. */}
+      {vvip && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 z-10 overflow-hidden"
+        >
+          <div className="h-full w-1/3 bg-gradient-to-r from-transparent via-white/55 to-transparent motion-safe:animate-vvip-sheen" />
+        </div>
+      )}
+
+      {/* Portrait box (3:4). Faces sit in the upper third of most uploads, so
+          the image is anchored to the top instead of centre-cropped. */}
+      <div className="relative aspect-[3/4] w-full overflow-hidden">
         <Image
-          height={200}
           alt={fullName}
-          width={"100%"}
+          radius="none"
           isZoomed={!blurred && !isDeleted}
           src={profilePhoto?.url}
-          className={clsx("object-cover", {
+          classNames={{
+            wrapper: "!max-w-full w-full h-full",
+            zoomedWrapper: "w-full h-full",
+          }}
+          className={clsx("w-full h-full object-cover object-top", {
             "blur-[6px]": blurred,
             "grayscale opacity-70": isDeleted,
           })}
         />
-        {/* Hide the badge once a gallery grant unblurs this private profile. */}
-        {!isDeleted && isPrivate && blurred && <PrivateBadge />}
+        {/* Hide the badge once a gallery grant unblurs this private/gallery-locked profile. */}
+        {!isDeleted && galleryLocked && blurred && <PrivateBadge />}
+        {/* VVIP supersedes Premium — a VVIP is always a paying subscriber, so
+            both badges would be redundant (and would overlap: same corner). */}
+        {vvip ? <VvipBadge /> : !isDeleted && isPremium && <PremiumBadge />}
         {/* z-20 keeps the bookmark clickable above the PrivateBadge overlay. */}
         {!isDeleted && (
           <Button
@@ -191,8 +226,8 @@ const MatchCard = ({
 
       <div className="p-3 text-sm">
         <div className="flex items-center gap-2 justify-between">
-          <p className="font-medium inline-flex items-center gap-1">
-            {CommonUtils.formatNameWithUserId({ fullName, userId })}
+          <p className="font-bold text-base text-primary inline-flex items-center gap-1">
+            {fullName}
             {isVerified && (
               <MdVerified
                 className="text-blue-500 shrink-0"
@@ -235,9 +270,9 @@ const MatchCard = ({
         </p>
 
         <div className="mt-3 flex flex-wrap items-center gap-3">
-          {sect && (
+          {community && (
             <Chip size="sm" color="success" variant="flat">
-              {CommonUtils.formatTitle(sect)}
+              {CommonUtils.formatTitle(community)}
             </Chip>
           )}
           {address?.cityName && (

@@ -78,7 +78,9 @@ const ChatHeader = ({ roomId }: { roomId: string }) => {
                   "w-8 h-8 text-large ring-2 ring-offset-2 ring-transparent group-hover:ring-primary/20 transition-all",
                   {
                     "blur-[2px]":
-                      pariticipant?.shouldBlur ?? pariticipant?.isPrivate,
+                      pariticipant?.shouldBlur ??
+                      (pariticipant?.isPrivate ||
+                        pariticipant?.isGalleryPrivate),
                   },
                 )}
               />

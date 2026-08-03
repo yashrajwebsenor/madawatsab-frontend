@@ -61,7 +61,7 @@ const MyProfileDetailsCard = () => {
                 "text-[#0b4d42] font-extrabold text-[13px] tracking-widest",
             }}
           >
-            {CommonUtils.formatTitle(user.sect) ||
+            {CommonUtils.formatTitle(user.community) ||
               CommonUtils.formatTitle(user.maslak)}
           </Chip>
           <Chip

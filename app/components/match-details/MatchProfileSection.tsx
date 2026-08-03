@@ -37,9 +37,11 @@ import {
 import { MdOutlineWorkOutline, MdVerified } from "react-icons/md";
 import { TiHeartFullOutline } from "react-icons/ti";
 import { FiUnlock } from "react-icons/fi";
+import { FaCrown } from "react-icons/fa";
+import { BsGem } from "react-icons/bs";
 import PrivateBadge from "../shared/PrivateBadge";
 import UserActionsMenu from "../shared/UserActionsMenu";
-import { GalleryRequestStatus } from "@/app/types/enum";
+import { ContactPrivacy, GalleryRequestStatus } from "@/app/types/enum";
 
 type RevealedContact = { mobile?: string; email?: string } | null;
 
@@ -58,11 +60,19 @@ const MatchProfileSection = ({
   const shortlisted = isShortlisted(profile._id, profile.isShortlisted);
 
   const age = dayjs().diff(dayjs(profile?.dob), "years");
-  const blurred = profile?.shouldBlur ?? profile?.isPrivate;
-  // Photo blurred because viewer lacks a subscription (target is public).
-  const subscriptionLocked = !!profile?.shouldBlur && !profile?.isPrivate;
+  // Gallery-locked: full private profile OR a public profile with just its
+  // gallery locked. Either way the "Request Photos" flow applies.
+  const galleryLocked = !!(profile?.isPrivate || profile?.isGalleryPrivate);
+  const blurred = profile?.shouldBlur ?? galleryLocked;
+  // Photo blurred because viewer lacks a subscription (target is fully public).
+  const subscriptionLocked = !!profile?.shouldBlur && !galleryLocked;
 
   const [contact, setContact] = useState<RevealedContact>(null);
+  // The target's contact-privacy mode, from the status check. `interest` means
+  // their number isn't purchasable, so the reveal/upsell buttons must not show.
+  const [contactMode, setContactMode] = useState<ContactPrivacy>(
+    ContactPrivacy.premium,
+  );
   // True while the initial already-unlocked check runs — render a placeholder
   // instead of flashing the reveal button for contacts that are unlocked.
   const [checkingStatus, setCheckingStatus] = useState(true);
@@ -257,8 +267,9 @@ const MatchProfileSection = ({
         const res: any = await api.get(
           ENDPOINTS.SUBSCRIPTION.CONTACT_STATUS(profile._id),
         );
-        if (active && res?.data?.unlocked) {
-          setContact(res.data.contact ?? null);
+        if (active) {
+          if (res?.data?.unlocked) setContact(res.data.contact ?? null);
+          if (res?.data?.mode) setContactMode(res.data.mode);
         }
       } catch {
         // Non-blocking: reveal button stays available on failure.
@@ -300,7 +311,7 @@ const MatchProfileSection = ({
   };
 
   return (
-    <div className="bg-white rounded-[2rem] overflow-hidden shadow-sm flex flex-col md:flex-row w-full border border-gray-100 lg:h-[580px]">
+    <div className="bg-white overflow-hidden shadow-sm flex flex-col md:flex-row w-full border border-gray-100 lg:h-[580px]">
       <div className="w-full md:w-[350px] lg:w-[360px] aspect-[4/5] md:aspect-auto relative md:self-stretch">
         <Image
           removeWrapper
@@ -310,8 +321,8 @@ const MatchProfileSection = ({
             "blur-[6px]": blurred,
           })}
         />
-        {profile.isPrivate ? (
-          // Hidden once a gallery grant unblurs this private profile.
+        {galleryLocked ? (
+          // Hidden once a gallery grant unblurs this private/gallery-locked profile.
           blurred && <PrivateBadge />
         ) : (
           subscriptionLocked && (
@@ -325,9 +336,9 @@ const MatchProfileSection = ({
             </div>
           )
         )}
-        {/* Gallery request — private targets, subscribed viewers, no grant yet.
-            z-20 sits above the PrivateBadge overlay. */}
-        {profile.isPrivate && blurred && hasActivePlan && (
+        {/* Gallery request — private/gallery-locked targets, subscribed
+            viewers, no grant yet. z-20 sits above the PrivateBadge overlay. */}
+        {galleryLocked && blurred && hasActivePlan && (
           <div className="absolute inset-x-4 bottom-4 z-20">
             {galleryRequestStatus === GalleryRequestStatus.pending ? (
               <Button
@@ -368,6 +379,24 @@ const MatchProfileSection = ({
                   className="text-blue-500 text-2xl"
                   aria-label="Verified"
                 />
+              )}
+              {/* VVIP supersedes the Premium crown — a VVIP is always a paying
+                  subscriber, so showing both would be redundant. */}
+              {profile?.isVvip ? (
+                <span
+                  className="inline-flex shrink-0 items-center gap-1 rounded-full bg-gradient-to-r from-[#8a6d1f] via-[#E9C349] to-[#8a6d1f] px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-widest text-white shadow-md ring-1 ring-white/40"
+                  aria-label="VVIP Member"
+                >
+                  <BsGem size={9} className="shrink-0" />
+                  VVIP
+                </span>
+              ) : (
+                profile?.isPremium && (
+                  <FaCrown
+                    className="text-amber-500 text-xl"
+                    aria-label="Premium Member"
+                  />
+                )
               )}
             </div>
             <p className="text-gray-500 mt-1 font-medium">
@@ -411,13 +440,13 @@ const MatchProfileSection = ({
               </p>
             </div>
           )}
-          {profile.sect && (
+          {profile.community && (
             <div className="bg-[#FFFBEB] p-4 rounded-2xl">
               <p className="text-[10px] font-bold text-secondary uppercase tracking-wider mb-1">
-                Sect / Religion
+                Community / Religion
               </p>
               <p className="font-bold text-gray-800">
-                {CommonUtils.formatTitle(profile.sect)} Muslim
+                {CommonUtils.formatTitle(profile.community)} Muslim
               </p>
             </div>
           )}
@@ -623,6 +652,21 @@ const MatchProfileSection = ({
                   {contact.email}
                 </div>
               )}
+            </div>
+          ) : contactMode === ContactPrivacy.interest ? (
+            // Not purchasable — no reveal button, and deliberately no plan
+            // upsell: credits cannot unlock this number. Sending an interest
+            // doesn't help either; only THEIR interest (or their acceptance)
+            // opens it, so the copy never tells the viewer to send one.
+            <div className="flex flex-col gap-2">
+              <div className="flex items-start gap-2 rounded-xl bg-gray-50 p-3 text-gray-500">
+                <IoIosLock size={16} className="mt-0.5 shrink-0" />
+                <p className="text-xs">
+                  {isInterestSent
+                    ? "This member shares their contact only with their interests. You'll see it here if they accept your interest."
+                    : "This member shares their contact only with people they've sent an interest to, or whose interest they've accepted."}
+                </p>
+              </div>
             </div>
           ) : hasContactCredits ? (
             <div className="flex flex-col gap-2">

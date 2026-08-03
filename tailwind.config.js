@@ -38,6 +38,31 @@ const config = {
           "2xl": "1500px",
         },
       },
+      // VVIP card treatment. Built on the brand gold (secondary #E9C349) so the
+      // tier reads as premium-brand rather than a second, unrelated gold.
+      keyframes: {
+        // A sheen sweeping across the card. Long pause between passes (the
+        // travel happens in the first ~30% of the cycle) so it catches the eye
+        // without ever becoming a strobe in a grid of many VVIP cards.
+        "vvip-sheen": {
+          "0%": { transform: "translateX(-150%) skewX(-16deg)" },
+          "30%, 100%": { transform: "translateX(350%) skewX(-16deg)" },
+        },
+        "vvip-glow": {
+          "0%, 100%": {
+            boxShadow:
+              "0 0 0 1px rgba(233,195,73,0.5), 0 4px 16px -6px rgba(233,195,73,0.45)",
+          },
+          "50%": {
+            boxShadow:
+              "0 0 0 1px rgba(233,195,73,0.85), 0 10px 30px -6px rgba(233,195,73,0.7)",
+          },
+        },
+      },
+      animation: {
+        "vvip-sheen": "vvip-sheen 6s ease-in-out infinite",
+        "vvip-glow": "vvip-glow 3.5s ease-in-out infinite",
+      },
     },
   },
   plugins: [heroui()],

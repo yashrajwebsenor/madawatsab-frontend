@@ -5,7 +5,10 @@ import APP_CONFIG from "../configs/app-config";
 import useUpgradeModalStore from "../store/useUpgradeModalStore";
 
 // Backend error `code`s that should open the upgrade modal instead of a toast.
-const UPGRADE_MODAL_CODES = ["INTEREST_LIMIT_REACHED"];
+const UPGRADE_MODAL_CODES = [
+  "INTEREST_LIMIT_REACHED",
+  "VVIP_INTEREST_RESTRICTED",
+];
 
 const api = axios.create({
   baseURL: APP_CONFIG.API_BASE_URL,

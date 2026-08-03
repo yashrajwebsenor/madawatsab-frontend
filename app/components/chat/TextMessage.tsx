@@ -67,7 +67,7 @@ const TextMessage = ({ message, isMe, showSeen, isHighlighted }: Props) => {
           )}
 
           {message.isDeleted ? (
-            <div className="px-3 py-1.5 rounded-2xl bg-content2 border border-divider/5 text-foreground/50 italic">
+            <div className="px-3 py-1.5 rounded-2xl bg-[#F1F5F4] border border-primary/10 text-[#274442]/50 italic">
               <p className="text-[13px] leading-relaxed flex items-center gap-1.5">
                 <FiSlash size={13} /> This message was deleted
               </p>
@@ -77,9 +77,11 @@ const TextMessage = ({ message, isMe, showSeen, isHighlighted }: Props) => {
               className={clsx(
                 "px-3 py-1.5 shadow-sm transition-all duration-500",
                 isMe
-                  ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-none"
-                  : "bg-content2 text-foreground rounded-2xl rounded-tl-none border border-divider/5",
-                isHighlighted && "ring-2 ring-primary",
+                  ? "bg-[#91700A] text-white rounded-2xl rounded-tr-none"
+                  : "bg-primary text-white rounded-2xl rounded-tl-none",
+                // Green ring reads on the gold outgoing bubble; gold ring on
+                // the green incoming bubble — visible on both.
+                isHighlighted && (isMe ? "ring-2 ring-primary" : "ring-2 ring-secondary"),
               )}
             >
               <p className="text-[13px] leading-relaxed break-words whitespace-pre-wrap">

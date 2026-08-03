@@ -8,9 +8,9 @@ import { Card, Skeleton } from "@heroui/react";
 
 // Single match card placeholder — mirrors MatchCard (image + name + chips).
 export const MatchCardSkeleton = () => (
-  <Card shadow="none" className="border-none bg-white h-full">
+  <Card shadow="none" radius="none" className="border-none bg-white h-full">
     <Skeleton className="rounded-none">
-      <div className="h-[200px] w-full" />
+      <div className="aspect-[3/4] w-full" />
     </Skeleton>
     <div className="p-3 flex flex-col gap-3">
       <div className="flex items-center justify-between gap-2">
@@ -140,7 +140,7 @@ export const FormSkeleton = ({ fields = 6 }: { fields?: number }) => (
 export const PhotoGridSkeleton = ({ count = 3 }: { count?: number }) => (
   <div className="grid sm:grid-cols-3 gap-5">
     {Array.from({ length: count }).map((_, i) => (
-      <Skeleton key={i} className="w-full aspect-[4/5] rounded-lg" />
+      <Skeleton key={i} className="w-full aspect-[4/5] rounded-none" />
     ))}
   </div>
 );
@@ -149,7 +149,7 @@ export const PhotoGridSkeleton = ({ count = 3 }: { count?: number }) => (
 export const MatchDetailSkeleton = () => (
   <div className="flex flex-col lg:flex-row lg:items-start gap-8">
     <div className="lg:flex-[2] lg:min-w-0">
-      <div className="bg-white rounded-[2rem] overflow-hidden shadow-sm flex flex-col md:flex-row w-full border border-gray-100 lg:h-[580px]">
+      <div className="bg-white overflow-hidden shadow-sm flex flex-col md:flex-row w-full border border-gray-100 lg:h-[580px]">
         <Skeleton className="w-full md:w-[350px] lg:w-[360px] h-[400px] md:h-auto md:self-stretch rounded-none" />
         <div className="flex-1 p-8 lg:p-10 flex flex-col gap-5">
           <div className="flex justify-between items-start gap-4">

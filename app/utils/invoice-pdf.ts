@@ -14,6 +14,15 @@ const COMPANY = {
 const inr = (amount: number) =>
   `INR ${amount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+// Split the paid total into plan amount + GST for display. GST is 18% of the
+// total paid (e.g. 1700 -> plan 1394 + GST 306), not backed out as inclusive tax.
+const GST_RATE = 0.18;
+const splitGst = (totalPaid: number) => {
+  const gst = totalPaid * GST_RATE;
+  const base = totalPaid - gst;
+  return { base, gst };
+};
+
 // Builds a one-page A4 invoice from a stored Invoice record and triggers a
 // browser download. jsPDF's built-in Helvetica is WinAnsi-encoded and can't
 // render the ₹ glyph, so amounts are printed as "INR" here.
@@ -89,26 +98,34 @@ export const downloadInvoicePdf = (invoice: Invoice) => {
   doc.text("DESCRIPTION", left + 14, tableTop + 18);
   doc.text("AMOUNT", right - 14, tableTop + 18, { align: "right" });
 
+  const { base, gst } = splitGst(invoice.amount);
+
   const rowY = tableTop + 28 + 24;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
   doc.setTextColor(40, 40, 40);
   doc.text(invoice.planName ?? "Payment", left + 14, rowY);
-  doc.text(inr(invoice.amount), right - 14, rowY, { align: "right" });
+  doc.text(inr(base), right - 14, rowY, { align: "right" });
+
+  const gstRowY = rowY + 22;
+  doc.setFontSize(10);
+  doc.setTextColor(90, 90, 90);
+  doc.text("GST (18%)", left + 14, gstRowY);
+  doc.text(inr(gst), right - 14, gstRowY, { align: "right" });
 
   doc.setDrawColor(225, 225, 225);
-  doc.line(left, rowY + 16, right, rowY + 16);
+  doc.line(left, gstRowY + 16, right, gstRowY + 16);
 
   // --- Total ---
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
   doc.setTextColor(40, 40, 40);
-  doc.text("Total Paid", left + 14, rowY + 42);
-  doc.text(inr(invoice.amount), right - 14, rowY + 42, { align: "right" });
+  doc.text("Total Paid", left + 14, gstRowY + 42);
+  doc.text(inr(invoice.amount), right - 14, gstRowY + 42, { align: "right" });
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   doc.setTextColor(150, 150, 150);
-  doc.text("(inclusive of all taxes)", right - 14, rowY + 56, {
+  doc.text("(inclusive of all taxes)", right - 14, gstRowY + 56, {
     align: "right",
   });
 
@@ -119,7 +136,7 @@ export const downloadInvoicePdf = (invoice: Invoice) => {
     doc.text(
       `Transaction ID: ${invoice.razorpayPaymentId}`,
       left,
-      rowY + 100,
+      gstRowY + 100,
     );
   }
   doc.setFontSize(9);
@@ -127,7 +144,7 @@ export const downloadInvoicePdf = (invoice: Invoice) => {
   doc.text(
     "Thank you for choosing Madawatsab. This is a computer-generated invoice.",
     left,
-    rowY + 120,
+    gstRowY + 120,
   );
 
   doc.save(`Invoice-${invoice.invoiceNumber ?? invoice.userId}.pdf`);

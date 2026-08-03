@@ -17,13 +17,8 @@ export enum MaritalStatus {
   never_married = "never_married",
   divorced = "divorced",
   widowed = "widowed",
+  separated = "separated",
   awaiting_divorce = "awaiting_divorce",
-}
-
-export enum Sects {
-  sunni = "sunni",
-  shia = "shia",
-  other = "other",
 }
 
 export enum FamilyTypes {
@@ -82,6 +77,9 @@ export enum AttachmentTypes {
   chat_image = "chat_image",
   chat_video = "chat_video",
   report_evidence = "report_evidence",
+  // Aadhaar / govt ID-proof photo the user uploads for verification. Single per
+  // user; only an admin can remove it.
+  id_proof = "id_proof",
 }
 
 // Reasons a user can pick when reporting another user. Mirrors the backend
@@ -105,8 +103,11 @@ export enum MetadataTypes {
   qualification = "qualification",
   occupation = "occupation",
   annual_income = "annual_income",
+  maslak = "maslak",
   caste = "caste",
   employed_in = "employed_in",
+  community = "community",
+  language = "language",
 }
 
 export enum MessageTypes {
@@ -139,4 +140,16 @@ export enum YesNoSometimes {
 export enum DietPreference {
   vegetarian = "vegetarian",
   non_vegetarian = "non_vegetarian",
+}
+
+/**
+ * Who can see a user's mobile/email. Mirrors the backend ContactPrivacy enum.
+ *
+ * `premium`  — anyone with contact-view credits can spend one to unlock it.
+ * `interest` — not purchasable at any price; free only for people the owner
+ *              sent an interest to, or whose interest the owner accepted.
+ */
+export enum ContactPrivacy {
+  premium = "premium",
+  interest = "interest",
 }

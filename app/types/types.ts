@@ -1,6 +1,7 @@
 import {
   AttachmentStatus,
   AttachmentTypes,
+  ContactPrivacy,
   DietPreference,
   GalleryRequestStatus,
   HelpSupportStatus,
@@ -21,13 +22,26 @@ export interface User {
   userType: string;
   isOnboardingCompleted: boolean;
   isPrivate: boolean;
+  // Independent of isPrivate: locks only the gallery/photos on an otherwise
+  // public profile, behind the same gallery-request flow.
+  isGalleryPrivate?: boolean;
+  // Who can see this user's mobile/email. Own-profile only — never serialized
+  // on someone else's profile.
+  contactPrivacy?: ContactPrivacy;
   // Admin-granted trust marker. Renders a blue verified tick next to the
   // user's name across the web panel (discovery cards, profile detail).
   isVerified?: boolean;
+  // Active paying subscriber. Renders a crown "Premium" badge on discovery
+  // cards + profile detail (public trust marker, same treatment as isVerified).
+  isPremium?: boolean;
+  // Active VVIP-tier subscriber. Supersedes the Premium badge and switches the
+  // card to the animated gold treatment.
+  isVvip?: boolean;
   appLanguage: string;
   createdAt: string;
   annualIncome: string;
   community: string;
+  caste: string;
   dob: string;
   fullName: string;
   gender: string;
@@ -38,11 +52,14 @@ export interface User {
   maslak: string;
   profileFor: ProfileFor;
   qualification: string;
-  sect: string;
   workSector: string;
   occupation: string;
   profilePhoto?: Photo;
   photos: Photo[];
+  // Aadhaar / ID-proof submission (own profile only). Null until the user
+  // uploads one; drives the "verify your identity" nudge modal + upload screen.
+  // Only an admin can remove it, after which the user can submit again.
+  idProof?: Photo | null;
   isEntryFeePaid: boolean;
   // Permanent app-access flag (paid entry fee OR entered while fee disabled).
   // The entry gate checks this, not isEntryFeePaid.
@@ -107,6 +124,7 @@ export interface SubscriptionCapabilities {
   canBlock: boolean;
   hasProfileBoost: boolean;
   hasRelationshipManager: boolean;
+  isVvip: boolean;
 }
 
 export interface Subscription {
@@ -130,7 +148,12 @@ export interface Invoice {
   userName: string | null;
   planName: string | null;
   paymentType: PaymentTypes;
+  /** What was actually charged — after any coupon discount. */
   amount: number;
+  /** Pre-discount amount; null when no coupon was used. */
+  originalAmount?: number | null;
+  couponCode?: string | null;
+  couponDiscount?: number;
   currency: string;
   status: string;
   razorpayPaymentId: string | null;
@@ -146,6 +169,10 @@ export interface Family {
   motherName: string;
   motherOccupation: string;
   motherContact: string;
+  brothers?: number;
+  marriedBrothers?: number;
+  sisters?: number;
+  marriedSisters?: number;
 }
 
 export interface Address {
@@ -193,6 +220,7 @@ export interface Plan {
   canBlock: boolean;
   hasProfileBoost: boolean;
   hasRelationshipManager: boolean;
+  isVvip: boolean;
   pricing: {
     duration: PlanDurationTypes;
     originalPrice: number;
@@ -211,6 +239,40 @@ export interface HelpSupport {
   _id: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface HelpSupportFaq {
+  _id: string;
+  question: string;
+  answer: string;
+  order: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OfficeAgent {
+  _id: string;
+  fullName: string;
+  gender: string;
+  mobile: string;
+  profilePhoto?: { _id: string; url: string };
+}
+
+export interface Office {
+  _id: string;
+  // An office serves several cities/pincodes, but the endpoint flattens the
+  // viewer's own city onto the object — the card only ever names one city.
+  cities?: { cityId: number; cityName: string; stateName?: string }[];
+  pincodes?: number[];
+  cityId: number;
+  cityName: string;
+  stateName?: string;
+  countryName?: string;
+  address?: string;
+  phone?: string;
+  openingHours?: string;
+  agents: OfficeAgent[];
 }
 
 export type ProfileMatch = User & {
@@ -336,7 +398,9 @@ export type NotificationType =
   | "gallery_request_approved"
   | "profile_visit"
   | "new_message"
-  | "system";
+  | "system"
+  | "partner_recommendation"
+  | "agent_assigned";
 
 export interface AppNotification {
   _id: string;
@@ -393,6 +457,7 @@ export interface ChatRoomParticipant {
   photos: Photo[];
   occupation: string;
   isPrivate?: boolean;
+  isGalleryPrivate?: boolean;
   // Backend-computed: blur this participant's avatar (no sub, or private target).
   shouldBlur?: boolean;
   // True when this participant self-deleted their account (masked stub).

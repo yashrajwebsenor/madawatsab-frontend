@@ -9,9 +9,11 @@ import OnboardingLeftSection from "@/app/components/shared/OnboardingLeftSection
 import useConfigStore from "@/app/store/useConfigStore";
 import useUserStore from "@/app/store/useUserStore";
 import resolveGateRoute from "@/app/utils/gate.utils";
+import SiblingCountFields from "@/app/components/shared/SiblingCountFields";
 import useCountryCityStates from "@/app/hooks/useCountryCityStates";
 import { FamilyTypes } from "@/app/types/enum";
 import CommonUtils from "@/app/utils/common.utils";
+import noAutofill from "@/app/utils/no-autofill";
 import { familyDetailsSchema } from "@/app/utils/validation.util";
 import {
   addToast,
@@ -28,7 +30,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 const defaultValues = {
@@ -43,6 +45,10 @@ const defaultValues = {
   state: "",
   city: "",
   aboutFamily: "",
+  brothers: 0,
+  marriedBrothers: 0,
+  sisters: 0,
+  marriedSisters: 0,
 };
 
 const page = () => {
@@ -61,10 +67,22 @@ const page = () => {
     cities,
     countries,
     states,
+    statesLoaded,
+    citiesLoaded,
     fetchCities,
     fetchCountries,
     fetchStates,
   } = useCountryCityStates();
+
+  // A country/state with zero options (e.g. Antarctica has no states) must
+  // not force a selection the user can never make.
+  const hasStates = !statesLoaded || states.length > 0;
+  const hasCities = !citiesLoaded || cities.length > 0;
+
+  const schema = useMemo(
+    () => familyDetailsSchema(hasStates, hasCities),
+    [hasStates, hasCities],
+  );
 
   const {
     watch,
@@ -75,7 +93,7 @@ const page = () => {
     formState: { errors, isSubmitting },
   } = useForm({
     defaultValues,
-    resolver: yupResolver(familyDetailsSchema),
+    resolver: yupResolver(schema),
   });
 
   const getDetails = async () => {
@@ -99,6 +117,10 @@ const page = () => {
           country: result?.country,
           state: result?.state,
           city: result?.city,
+          brothers: result?.brothers ?? 0,
+          marriedBrothers: result?.marriedBrothers ?? 0,
+          sisters: result?.sisters ?? 0,
+          marriedSisters: result?.marriedSisters ?? 0,
         });
 
         if (result?.country) {
@@ -125,8 +147,12 @@ const page = () => {
       await api.put(ENDPOINTS.FAMILY.UPDATE, {
         ...data,
         country: Number(data.country),
-        state: Number(data.state),
-        city: Number(data.city),
+        state: data.state ? Number(data.state) : undefined,
+        city: data.city ? Number(data.city) : undefined,
+        brothers: Number(data.brothers) || 0,
+        marriedBrothers: Number(data.marriedBrothers) || 0,
+        sisters: Number(data.sisters) || 0,
+        marriedSisters: Number(data.marriedSisters) || 0,
       });
       addToast({
         title: "Success",
@@ -172,7 +198,7 @@ const page = () => {
             </div>
           ) : (
             <form
-              className="mt-10 grid gap-5"
+              className="mt-10 grid gap-8 text-left"
               onSubmit={handleSubmit(onSubmit)}
             >
               <div className="grid gap-5 sm:grid-cols-2">
@@ -181,8 +207,8 @@ const page = () => {
                   name="familyType"
                   render={({ field }) => (
                     <Select
-                      label="MARITAL STATUS"
-                      placeholder="Select Marital Status"
+                      label="FAMILY TYPE"
+                      placeholder="Select Family Type"
                       variant="underlined"
                       isInvalid={!!errors.familyType}
                       errorMessage={errors.familyType?.message}
@@ -199,177 +225,204 @@ const page = () => {
                 />
               </div>
 
-              <div className="grid gap-5 sm:grid-cols-2">
-                <Controller
-                  control={control}
-                  name="fatherName"
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      label="FATHERS NAME"
-                      variant="underlined"
-                      placeholder="Enter Father Name"
-                      isInvalid={!!errors.fatherName}
-                      errorMessage={errors.fatherName?.message}
-                    />
-                  )}
-                />
-                <Controller
-                  control={control}
-                  name="fatherOccupation"
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      label="FATHERS OCCUPATION"
-                      variant="underlined"
-                      placeholder="Enter Father Occupation"
-                      isInvalid={!!errors.fatherOccupation}
-                      errorMessage={errors.fatherOccupation?.message}
-                    />
-                  )}
-                />
-                <Controller
-                  control={control}
-                  name="fatherContact"
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      label="FATHERS CONTACT NUMBER (OPTIONAL)"
-                      variant="underlined"
-                      placeholder="Enter Father Contact Number"
-                      isInvalid={!!errors.fatherContact}
-                      errorMessage={errors.fatherContact?.message}
-                    />
-                  )}
-                />
+              <div className="grid gap-5 rounded-2xl border border-gray-100 p-5 sm:p-6">
+                <h3 className="text-sm font-semibold text-slate-700">
+                  Father&apos;s Details
+                </h3>
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <Controller
+                    control={control}
+                    name="fatherName"
+                    render={({ field }) => (
+                      <Input
+                        {...field}
+                        label="FATHER'S NAME"
+                        variant="underlined"
+                        placeholder="Enter Father Name"
+                        isInvalid={!!errors.fatherName}
+                        errorMessage={errors.fatherName?.message}
+                      />
+                    )}
+                  />
+                  <Controller
+                    control={control}
+                    name="fatherOccupation"
+                    render={({ field }) => (
+                      <Input
+                        {...field}
+                        label="FATHER'S OCCUPATION"
+                        variant="underlined"
+                        placeholder="Enter Father Occupation"
+                        isInvalid={!!errors.fatherOccupation}
+                        errorMessage={errors.fatherOccupation?.message}
+                      />
+                    )}
+                  />
+                  <Controller
+                    control={control}
+                    name="fatherContact"
+                    render={({ field }) => (
+                      <Input
+                        {...field}
+                        label="FATHER'S CONTACT NUMBER (OPTIONAL)"
+                        variant="underlined"
+                        placeholder="Enter Father Contact Number"
+                        isInvalid={!!errors.fatherContact}
+                        errorMessage={errors.fatherContact?.message}
+                        className="sm:col-span-2"
+                      />
+                    )}
+                  />
+                </div>
               </div>
 
-              <div className="grid gap-5 sm:grid-cols-2">
-                <Controller
-                  control={control}
-                  name="motherName"
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      label="MOTHERS NAME"
-                      variant="underlined"
-                      placeholder="Enter Mother Name"
-                      isInvalid={!!errors.motherName}
-                      errorMessage={errors.motherName?.message}
-                    />
-                  )}
-                />
-                <Controller
-                  control={control}
-                  name="motherOccupation"
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      label="MOTHERS OCCUPATION"
-                      variant="underlined"
-                      placeholder="Enter Mother Occupation"
-                      isInvalid={!!errors.motherOccupation}
-                      errorMessage={errors.motherOccupation?.message}
-                    />
-                  )}
-                />
-                <Controller
-                  control={control}
-                  name="motherContact"
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      label="MOTHERS CONTACT NUMBER (OPTIONAL)"
-                      variant="underlined"
-                      placeholder="Enter Mother Contact Number"
-                      isInvalid={!!errors.motherContact}
-                      errorMessage={errors.motherContact?.message}
-                    />
-                  )}
-                />
+              <div className="grid gap-5 rounded-2xl border border-gray-100 p-5 sm:p-6">
+                <h3 className="text-sm font-semibold text-slate-700">
+                  Mother&apos;s Details
+                </h3>
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <Controller
+                    control={control}
+                    name="motherName"
+                    render={({ field }) => (
+                      <Input
+                        {...field}
+                        label="MOTHER'S NAME"
+                        variant="underlined"
+                        placeholder="Enter Mother Name"
+                        isInvalid={!!errors.motherName}
+                        errorMessage={errors.motherName?.message}
+                      />
+                    )}
+                  />
+                  <Controller
+                    control={control}
+                    name="motherOccupation"
+                    render={({ field }) => (
+                      <Input
+                        {...field}
+                        label="MOTHER'S OCCUPATION"
+                        variant="underlined"
+                        placeholder="Enter Mother Occupation"
+                        isInvalid={!!errors.motherOccupation}
+                        errorMessage={errors.motherOccupation?.message}
+                      />
+                    )}
+                  />
+                  <Controller
+                    control={control}
+                    name="motherContact"
+                    render={({ field }) => (
+                      <Input
+                        {...field}
+                        label="MOTHER'S CONTACT NUMBER (OPTIONAL)"
+                        variant="underlined"
+                        placeholder="Enter Mother Contact Number"
+                        isInvalid={!!errors.motherContact}
+                        errorMessage={errors.motherContact?.message}
+                        className="sm:col-span-2"
+                      />
+                    )}
+                  />
+                </div>
               </div>
 
-              <div className="grid gap-5 sm:grid-cols-3 items-start">
-                <Controller
-                  control={control}
-                  name="country"
-                  render={({ field }) => (
-                    <Autocomplete
-                      label="COUNTRY"
-                      labelPlacement="outside"
-                      placeholder="Select Country"
-                      inputProps={{ autoComplete: "new-password" }}
-                      isInvalid={!!errors.country}
-                      errorMessage={errors.country?.message}
-                      selectedKey={field.value ? String(field.value) : ""}
-                      onSelectionChange={(key) => {
-                        const val = key as string;
-                        field.onChange(val);
+              <div className="grid gap-5 rounded-2xl border border-gray-100 p-5 sm:p-6">
+                <h3 className="text-sm font-semibold text-slate-700">
+                  Location
+                </h3>
+                <div className="grid gap-x-5 gap-y-6 sm:grid-cols-3 items-start">
+                  <Controller
+                    control={control}
+                    name="country"
+                    render={({ field }) => (
+                      <Autocomplete
+                        label="COUNTRY"
+                        labelPlacement="outside"
+                        placeholder="Select Country"
+                        inputProps={noAutofill("family-country")}
+                        isInvalid={!!errors.country}
+                        errorMessage={errors.country?.message}
+                        selectedKey={field.value ? String(field.value) : ""}
+                        onSelectionChange={(key) => {
+                          const val = key as string;
+                          field.onChange(val);
 
-                        setValue("state", "");
-                        setValue("city", "");
-                        if (val) fetchStates(Number(val));
-                      }}
-                    >
-                      {countries?.map((item) => (
-                        <AutocompleteItem key={item.id}>
-                          {item.name}
-                        </AutocompleteItem>
-                      ))}
-                    </Autocomplete>
-                  )}
-                />
-                <Controller
-                  control={control}
-                  name="state"
-                  render={({ field }) => (
-                    <Autocomplete
-                      label="STATE/PROVINCE"
-                      labelPlacement="outside"
-                      placeholder="Select State"
-                      inputProps={{ autoComplete: "new-password" }}
-                      isInvalid={!!errors.state}
-                      errorMessage={errors.state?.message}
-                      selectedKey={field.value ?? ""}
-                      onSelectionChange={(key) => {
-                        const val = key as string;
-                        field.onChange(val);
-                        setValue("city", "");
-                        fetchCities(Number(watch("country")), Number(val));
-                      }}
-                    >
-                      {states?.map((item) => (
-                        <AutocompleteItem key={item.id}>
-                          {item.name}
-                        </AutocompleteItem>
-                      ))}
-                    </Autocomplete>
-                  )}
-                />
-                <Controller
-                  control={control}
-                  name="city"
-                  render={({ field }) => (
-                    <Autocomplete
-                      label="CITY"
-                      labelPlacement="outside"
-                      placeholder="Select City"
-                      inputProps={{ autoComplete: "new-password" }}
-                      isInvalid={!!errors.city}
-                      errorMessage={errors.city?.message}
-                      selectedKey={field.value ?? ""}
-                      onSelectionChange={(key) => {
-                        field.onChange(key as string);
-                      }}
-                    >
-                      {cities?.map((item) => (
-                        <AutocompleteItem key={item.id}>
-                          {item.name}
-                        </AutocompleteItem>
-                      ))}
-                    </Autocomplete>
-                  )}
-                />
+                          setValue("state", "");
+                          setValue("city", "");
+                          if (val) fetchStates(Number(val));
+                        }}
+                      >
+                        {countries?.map((item) => (
+                          <AutocompleteItem key={item.id}>
+                            {item.name}
+                          </AutocompleteItem>
+                        ))}
+                      </Autocomplete>
+                    )}
+                  />
+                  <Controller
+                    control={control}
+                    name="state"
+                    render={({ field }) => (
+                      <Autocomplete
+                        label="STATE/PROVINCE"
+                        labelPlacement="outside"
+                        placeholder={
+                          statesLoaded && states.length === 0
+                            ? "Not applicable"
+                            : "Select State"
+                        }
+                        isDisabled={statesLoaded && states.length === 0}
+                        inputProps={noAutofill("family-state")}
+                        isInvalid={!!errors.state}
+                        errorMessage={errors.state?.message}
+                        selectedKey={field.value ?? ""}
+                        onSelectionChange={(key) => {
+                          const val = key as string;
+                          field.onChange(val);
+                          setValue("city", "");
+                          fetchCities(Number(watch("country")), Number(val));
+                        }}
+                      >
+                        {states?.map((item) => (
+                          <AutocompleteItem key={item.id}>
+                            {item.name}
+                          </AutocompleteItem>
+                        ))}
+                      </Autocomplete>
+                    )}
+                  />
+                  <Controller
+                    control={control}
+                    name="city"
+                    render={({ field }) => (
+                      <Autocomplete
+                        label="CITY"
+                        labelPlacement="outside"
+                        placeholder={
+                          citiesLoaded && cities.length === 0
+                            ? "Not applicable"
+                            : "Select City"
+                        }
+                        isDisabled={citiesLoaded && cities.length === 0}
+                        inputProps={noAutofill("family-city")}
+                        isInvalid={!!errors.city}
+                        errorMessage={errors.city?.message}
+                        selectedKey={field.value ?? ""}
+                        onSelectionChange={(key) => {
+                          field.onChange(key as string);
+                        }}
+                      >
+                        {cities?.map((item) => (
+                          <AutocompleteItem key={item.id}>
+                            {item.name}
+                          </AutocompleteItem>
+                        ))}
+                      </Autocomplete>
+                    )}
+                  />
+                </div>
               </div>
 
               <Controller
@@ -386,6 +439,8 @@ const page = () => {
                   />
                 )}
               />
+
+              <SiblingCountFields control={control} variant="underlined" />
 
               <div className="flex flex-col items-center gap-5">
                 <OnboardingContinueButton

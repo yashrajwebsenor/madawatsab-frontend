@@ -1,5 +1,6 @@
 import { MdOutlineFamilyRestroom } from "react-icons/md";
 import Section from "./Section";
+import SiblingCountFields from "../shared/SiblingCountFields";
 import { FamilyTypes } from "@/app/types/enum";
 import CommonUtils from "@/app/utils/common.utils";
 import { Controller, useForm } from "react-hook-form";
@@ -20,6 +21,10 @@ const defaultValues = {
   motherOccupation: "",
   motherContact: "",
   aboutFamily: "",
+  brothers: 0,
+  marriedBrothers: 0,
+  sisters: 0,
+  marriedSisters: 0,
 };
 
 const FamilySection = () => {
@@ -50,6 +55,10 @@ const FamilySection = () => {
           motherOccupation: result?.motherOccupation,
           motherContact: result?.motherContact,
           aboutFamily: result?.aboutFamily,
+          brothers: result?.brothers ?? 0,
+          marriedBrothers: result?.marriedBrothers ?? 0,
+          sisters: result?.sisters ?? 0,
+          marriedSisters: result?.marriedSisters ?? 0,
         });
       }
     } catch (error) {
@@ -65,7 +74,13 @@ const FamilySection = () => {
 
   const onSubmit = handleSubmit(async (data: typeof defaultValues) => {
     try {
-      await api.put(ENDPOINTS.FAMILY.UPDATE, data);
+      await api.put(ENDPOINTS.FAMILY.UPDATE, {
+        ...data,
+        brothers: Number(data.brothers) || 0,
+        marriedBrothers: Number(data.marriedBrothers) || 0,
+        sisters: Number(data.sisters) || 0,
+        marriedSisters: Number(data.marriedSisters) || 0,
+      });
       await getDetails();
     } catch (error) {
       console.log(error);
@@ -84,7 +99,10 @@ const FamilySection = () => {
         <div className="grid gap-5">
           <div className="grid items-center sm:grid-cols-2 gap-5 w-full">
             {fields.map((field) => {
-              const name = field.name as keyof typeof defaultValues;
+              const name = field.name as Exclude<
+                keyof typeof defaultValues,
+                "brothers" | "marriedBrothers" | "sisters" | "marriedSisters"
+              >;
               const error = errors[name];
 
               return (
@@ -145,6 +163,8 @@ const FamilySection = () => {
               />
             )}
           />
+
+          <SiblingCountFields control={control} />
         </div>
       )}
 

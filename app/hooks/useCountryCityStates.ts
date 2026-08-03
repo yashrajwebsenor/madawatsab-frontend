@@ -11,6 +11,12 @@ const useCountryCityStates = () => {
   const [countries, setCountries] = useState<Option[]>([]);
   const [states, setStates] = useState<Option[]>([]);
   const [cities, setCities] = useState<Option[]>([]);
+  // Some countries (e.g. Antarctica) genuinely have zero states/cities in the
+  // seeded data. These distinguish "still fetching" / "not fetched yet" from
+  // "fetched and there are none", so callers can stop requiring a selection
+  // instead of leaving the user stuck on a permanently-empty dropdown.
+  const [statesLoaded, setStatesLoaded] = useState(false);
+  const [citiesLoaded, setCitiesLoaded] = useState(false);
 
   const fetchCountries = async () => {
     try {
@@ -22,26 +28,39 @@ const useCountryCityStates = () => {
   };
 
   const fetchStates = async (countryId: number) => {
-    if (!countryId) return;
+    if (!countryId) return [];
     try {
       setStates([]);
       setCities([]);
+      setStatesLoaded(false);
+      setCitiesLoaded(false);
 
       const res = await api.get(ENDPOINTS.CONFIGS.STATE(countryId));
-      setStates(res?.data || []);
+      const result = res?.data || [];
+      setStates(result);
+      setStatesLoaded(true);
+      return result;
     } catch (error) {
       console.log("Error fetching states:", error);
+      setStatesLoaded(true);
+      return [];
     }
   };
 
   const fetchCities = async (countryId: number, stateId: number) => {
-    if (!countryId || !stateId) return;
+    if (!countryId || !stateId) return [];
     try {
       setCities([]);
+      setCitiesLoaded(false);
       const res = await api.get(ENDPOINTS.CONFIGS.CITY(countryId, stateId));
-      setCities(res?.data || []);
+      const result = res?.data || [];
+      setCities(result);
+      setCitiesLoaded(true);
+      return result;
     } catch (error) {
       console.log("Error fetching cities:", error);
+      setCitiesLoaded(true);
+      return [];
     }
   };
 
@@ -49,6 +68,8 @@ const useCountryCityStates = () => {
     countries,
     states,
     cities,
+    statesLoaded,
+    citiesLoaded,
     fetchCountries,
     fetchStates,
     fetchCities,

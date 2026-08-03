@@ -10,7 +10,7 @@ import api from "@/app/api/api";
 import ENDPOINTS from "@/app/api/endpoints";
 
 const UploadingOverlay = () => (
-  <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/20 backdrop-blur-[1px] rounded-lg">
+  <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
     <Spinner size="sm" color="white" variant="gradient" />
   </div>
 );
@@ -87,17 +87,47 @@ const ProfilePhotoSection = () => {
       icon={<IoCameraOutline size={20} className="text-primary" />}
       description="Your photos will be visible after admin verification."
       extra={
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-slate-600">
-            Profile Private
-          </span>
-          <Switch
-            size="sm"
-            color="primary"
-            defaultSelected={user?.isPrivate}
-            aria-label="Profile Private Toggle"
-            onChange={(ev) => updateMyProfile({ isPrivate: ev.target.checked })}
-          />
+        <div className="flex flex-col items-end gap-1.5">
+          <div className="flex flex-wrap items-center justify-end gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-slate-600">
+                Profile Private
+              </span>
+              <Switch
+                size="sm"
+                color="primary"
+                defaultSelected={user?.isPrivate}
+                aria-label="Profile Private Toggle"
+                onChange={(ev) =>
+                  updateMyProfile({ isPrivate: ev.target.checked })
+                }
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-slate-600">
+                Gallery Lock
+              </span>
+              <Switch
+                size="sm"
+                color="primary"
+                // A private profile already locks the gallery — show it as
+                // forced-on and non-interactive so the two settings never
+                // look contradictory.
+                isSelected={user?.isPrivate ? true : undefined}
+                defaultSelected={user?.isGalleryPrivate}
+                isDisabled={user?.isPrivate}
+                aria-label="Gallery Lock Toggle"
+                onChange={(ev) =>
+                  updateMyProfile({ isGalleryPrivate: ev.target.checked })
+                }
+              />
+            </div>
+          </div>
+          <p className="text-xs text-slate-400 max-w-[260px] text-right">
+            {user?.isPrivate
+              ? "Private profile: your whole profile, including your gallery, is hidden until you approve a request."
+              : "Your profile stays public. Turn on Gallery Lock to keep just your photos hidden until you approve a request."}
+          </p>
         </div>
       }
     >
@@ -109,21 +139,23 @@ const ProfilePhotoSection = () => {
           </h3>
 
           {profilePreview ? (
-            <div className="relative w-[200px] overflow-hidden rounded-lg animate-pulse">
+            <div className="relative w-[200px] overflow-hidden animate-pulse">
               <Image
                 src={profilePreview}
                 alt="Uploading profile photo"
-                className="w-[200px] aspect-[4/5] object-cover rounded-lg scale-105 blur-[1px]"
+                radius="none"
+                className="w-[200px] aspect-[4/5] object-cover scale-105 blur-[1px]"
               />
               <UploadingOverlay />
             </div>
           ) : profilePhoto?.url ? (
             <div className="flex flex-col gap-2">
-              <div className="relative w-[200px] overflow-hidden rounded-lg">
+              <div className="relative w-[200px] overflow-hidden">
                 <Image
                   src={profilePhoto.url}
                   alt="Profile photo"
-                  className="w-[200px] aspect-[4/5] object-cover rounded-lg"
+                  radius="none"
+                  className="w-[200px] aspect-[4/5] object-cover"
                   isZoomed
                 />
               </div>
@@ -163,12 +195,13 @@ const ProfilePhotoSection = () => {
             {photos?.map((photo, index) => (
               <div
                 key={index}
-                className="relative group overflow-hidden rounded-lg"
+                className="relative group overflow-hidden"
               >
                 <Image
                   src={photo.url}
                   alt={`Gallery photo ${index + 1}`}
-                  className="w-[200px] aspect-[4/5] object-cover rounded-lg"
+                  radius="none"
+                  className="w-[200px] aspect-[4/5] object-cover"
                   isZoomed
                 />
                 {photo.status === AttachmentStatus.pending && (
@@ -200,12 +233,13 @@ const ProfilePhotoSection = () => {
             {photoPreviews.map((preview, index) => (
               <div
                 key={`uploading-${index}`}
-                className="relative overflow-hidden rounded-lg animate-pulse"
+                className="relative overflow-hidden animate-pulse"
               >
                 <Image
                   src={preview}
                   alt="Uploading photo"
-                  className="w-[200px] aspect-[4/5] object-cover rounded-lg scale-105 blur-[1px]"
+                  radius="none"
+                  className="w-[200px] aspect-[4/5] object-cover scale-105 blur-[1px]"
                 />
                 <UploadingOverlay />
               </div>

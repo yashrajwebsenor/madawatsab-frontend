@@ -9,6 +9,8 @@ import {
   IoEyeOutline,
   IoImagesOutline,
   IoMegaphoneOutline,
+  IoPersonOutline,
+  IoSparklesOutline,
 } from "react-icons/io5";
 import { TiHeartFullOutline } from "react-icons/ti";
 import clsx from "clsx";
@@ -61,7 +63,19 @@ const TYPE_META: Record<
     Icon: IoMegaphoneOutline,
     iconClass: "bg-amber-100 text-amber-600",
   },
+  partner_recommendation: {
+    Icon: IoSparklesOutline,
+    iconClass: "bg-rose-100 text-rose-600",
+  },
+  agent_assigned: {
+    Icon: IoPersonOutline,
+    iconClass: "bg-indigo-100 text-indigo-600",
+  },
 };
+
+// Backend may add NotificationTypes before the client ships an icon for them;
+// fall back to the system badge so an unknown type never crashes the row.
+const FALLBACK_META = TYPE_META.system;
 
 // Messages are push-only (not stored in the feed) — the chat list already
 // tracks message unread — so there is no Messages tab here.
@@ -93,7 +107,7 @@ const EmptyState = () => (
 
 const NotificationRow = ({ item }: { item: AppNotification }) => {
   const router = useRouter();
-  const meta = TYPE_META[item.type];
+  const meta = TYPE_META[item.type] ?? FALLBACK_META;
   const actor = item.actorId;
 
   const open = () => {

@@ -46,7 +46,7 @@ const AttachmentMessage = ({
 
     if (attachment.type === AttachmentTypes.chat_image) {
       return (
-        <div className="relative w-full aspect-square max-h-[150px] overflow-hidden rounded-xl bg-content3/20">
+        <div className="relative w-full aspect-square max-h-[150px] overflow-hidden rounded-xl bg-black/10">
           <img
             src={attachment.url}
             alt="Attachment"
@@ -71,10 +71,10 @@ const AttachmentMessage = ({
 
     return (
       <div
-        className="flex items-center gap-3 p-3 rounded-xl bg-content3/30 border border-divider/10 cursor-pointer hover:bg-content3/50 transition-colors"
+        className="flex items-center gap-3 p-3 rounded-xl border border-white/20 bg-white/10 hover:bg-white/20 cursor-pointer transition-colors"
         onClick={() => window.open(attachment.url, "_blank")}
       >
-        <div className="p-2 rounded-lg bg-primary/10 text-primary">
+        <div className="p-2 rounded-lg bg-white/20 text-white">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="24"
@@ -92,7 +92,7 @@ const AttachmentMessage = ({
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-xs font-medium truncate">File Attachment</p>
-          <p className="text-[10px] text-foreground/50 uppercase">
+          <p className="text-[10px] uppercase text-white/70">
             {attachment.type}
           </p>
         </div>
@@ -134,7 +134,7 @@ const AttachmentMessage = ({
           )}
 
           {message.isDeleted ? (
-            <div className="px-3 py-1.5 rounded-2xl bg-content2 border border-divider/5 text-foreground/50 italic">
+            <div className="px-3 py-1.5 rounded-2xl bg-[#F1F5F4] border border-primary/10 text-[#274442]/50 italic">
               <p className="text-[13px] leading-relaxed flex items-center gap-1.5">
                 <FiSlash size={13} /> This message was deleted
               </p>
@@ -144,9 +144,9 @@ const AttachmentMessage = ({
               className={clsx(
                 "relative p-1 shadow-sm transition-all duration-500 overflow-hidden",
                 isMe
-                  ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-none"
-                  : "bg-content2 text-foreground rounded-2xl rounded-tl-none border border-divider/5",
-                isHighlighted && "ring-2 ring-primary",
+                  ? "bg-[#91700A] text-white rounded-2xl rounded-tr-none"
+                  : "bg-primary text-white rounded-2xl rounded-tl-none",
+                isHighlighted && (isMe ? "ring-2 ring-primary" : "ring-2 ring-secondary"),
               )}
             >
               <div className="w-full min-w-[200px]">{renderAttachment()}</div>

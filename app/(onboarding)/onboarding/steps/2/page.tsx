@@ -3,6 +3,7 @@
 import OnboardingContinueButton from "@/app/components/onboarding/OnboardingContinueButton";
 import OnboardingHeader from "@/app/components/onboarding/OnboardingHeader";
 import useUserStore from "@/app/store/useUserStore";
+import noAutofill from "@/app/utils/no-autofill";
 import { onboardingStep2Schema } from "@/app/utils/validation.util";
 import {
   Autocomplete,
@@ -15,7 +16,7 @@ import {
 } from "@heroui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import dayjs from "dayjs";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { parseDate } from "@internationalized/date";
 import useCountryCityStates from "@/app/hooks/useCountryCityStates";
@@ -36,6 +37,7 @@ const defaultValues = {
   country: "",
   state: "",
   city: "",
+  pincode: "",
   isFamilyLivingWithUser: false,
 };
 
@@ -48,16 +50,28 @@ const page = () => {
     countries,
     states,
     cities,
+    statesLoaded,
+    citiesLoaded,
     fetchCountries,
     fetchStates,
     fetchCities,
   } = useCountryCityStates();
+
+  // A country/state with zero options (e.g. Antarctica has no states) must
+  // not force a selection the user can never make.
+  const hasStates = !statesLoaded || states.length > 0;
+  const hasCities = !citiesLoaded || cities.length > 0;
 
   const isGenderLocked =
     user?.profileFor === ProfileFor.son ||
     user?.profileFor === ProfileFor.brother ||
     user?.profileFor === ProfileFor.sister ||
     user?.profileFor === ProfileFor.daughter;
+
+  const schema = useMemo(
+    () => onboardingStep2Schema(hasStates, hasCities),
+    [hasStates, hasCities],
+  );
 
   const {
     watch,
@@ -68,7 +82,7 @@ const page = () => {
     formState: { errors, isSubmitting },
   } = useForm({
     defaultValues,
-    resolver: yupResolver(onboardingStep2Schema),
+    resolver: yupResolver(schema),
   });
 
   useEffect(() => {
@@ -78,6 +92,7 @@ const page = () => {
         country: String(user?.address?.countryId),
         state: String(user?.address?.stateId),
         city: String(user?.address?.cityId),
+        pincode: user?.address?.pincode ? String(user.address.pincode) : "",
         gender:
           user?.profileFor === ProfileFor.son ||
           user?.profileFor === ProfileFor.brother
@@ -103,7 +118,10 @@ const page = () => {
     try {
       await updateMyProfile({
         ...data,
+        state: data.state || undefined,
+        city: data.city || undefined,
         dob: dayjs(data?.dob).toISOString(),
+        pincode: data.pincode ? Number(data.pincode) : undefined,
       } as any);
       router.push(routes.onboarding.step3);
     } catch (error) {
@@ -231,7 +249,7 @@ const page = () => {
                     label="COUNTRY"
                     labelPlacement="outside"
                     placeholder="Select Country"
-                    inputProps={{ autoComplete: "new-password" }}
+                    inputProps={noAutofill("onboarding-country")}
                     isInvalid={!!errors.country}
                     errorMessage={errors.country?.message}
                     selectedKey={field.value ? String(field.value) : ""}
@@ -259,8 +277,13 @@ const page = () => {
                   <Autocomplete
                     label="STATE/PROVINCE"
                     labelPlacement="outside"
-                    placeholder="Select State"
-                    inputProps={{ autoComplete: "new-password" }}
+                    placeholder={
+                      statesLoaded && states.length === 0
+                        ? "Not applicable"
+                        : "Select State"
+                    }
+                    isDisabled={statesLoaded && states.length === 0}
+                    inputProps={noAutofill("onboarding-state")}
                     isInvalid={!!errors.state}
                     errorMessage={errors.state?.message}
                     selectedKey={field.value ?? ""}
@@ -286,8 +309,13 @@ const page = () => {
                   <Autocomplete
                     label="CITY"
                     labelPlacement="outside"
-                    placeholder="Select City"
-                    inputProps={{ autoComplete: "new-password" }}
+                    placeholder={
+                      citiesLoaded && cities.length === 0
+                        ? "Not applicable"
+                        : "Select City"
+                    }
+                    isDisabled={citiesLoaded && cities.length === 0}
+                    inputProps={noAutofill("onboarding-city")}
                     isInvalid={!!errors.city}
                     errorMessage={errors.city?.message}
                     selectedKey={field.value ?? ""}
@@ -304,6 +332,24 @@ const page = () => {
                 )}
               />
             </div>
+
+            <Controller
+              control={control}
+              name="pincode"
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  label="PINCODE (OPTIONAL)"
+                  labelPlacement="outside"
+                  variant="underlined"
+                  placeholder="e.g. 400001"
+                  description="Helps us show you the office and agents nearest to you."
+                  {...noAutofill("onboarding-pincode")}
+                  isInvalid={!!errors.pincode}
+                  errorMessage={errors.pincode?.message}
+                />
+              )}
+            />
 
             <Controller
               control={control}

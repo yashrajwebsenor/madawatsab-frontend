@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Chip } from "@heroui/react";
+import { Avatar, Button, Chip } from "@heroui/react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { GoPersonAdd } from "react-icons/go";
@@ -43,9 +43,17 @@ const HomeHeadSection = () => {
           {user?.assignedAgent ? (
             assignedAgent && (
               <div className="flex items-center gap-3 bg-white/10 rounded-xl px-4 py-3">
-                <div className="bg-secondary/20 text-secondary p-2 rounded-lg">
-                  <FiUserCheck size={18} />
-                </div>
+                {assignedAgent.profilePhoto?.url ? (
+                  <Avatar
+                    size="md"
+                    name={assignedAgent.fullName}
+                    src={assignedAgent.profilePhoto.url}
+                  />
+                ) : (
+                  <div className="bg-secondary/20 text-secondary p-2 rounded-lg">
+                    <FiUserCheck size={18} />
+                  </div>
+                )}
                 <div>
                   <p className="text-white text-sm font-semibold">
                     {assignedAgent.fullName}

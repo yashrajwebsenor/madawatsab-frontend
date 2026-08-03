@@ -16,7 +16,8 @@ const layout = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     // The gate pages only make sense after onboarding is done.
     if (user && !user.isOnboardingCompleted) {
-      router.push(routes.onboarding.step1);
+      // replace: corrective bounce, not a user nav — must not grow history.
+      router.replace(routes.onboarding.step1);
     }
   }, [user, router]);
 

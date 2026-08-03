@@ -93,7 +93,11 @@ const ChatListCard = ({
               src={otherUser?.profilePhoto?.url}
               className={clsx(
                 "w-10 h-10 text-large ring-2 ring-offset-2 ring-transparent group-hover:ring-primary/20 transition-all rounded-full",
-                { "blur-[2px]": otherUser?.shouldBlur ?? otherUser?.isPrivate },
+                {
+                  "blur-[2px]":
+                    otherUser?.shouldBlur ??
+                    (otherUser?.isPrivate || otherUser?.isGalleryPrivate),
+                },
               )}
             />
           </Badge>

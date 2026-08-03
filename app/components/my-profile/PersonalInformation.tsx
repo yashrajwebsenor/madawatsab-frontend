@@ -1,7 +1,8 @@
 import { FaRegUser } from "react-icons/fa";
 import Section from "./Section";
-import { Gender, MetadataTypes, Sects } from "@/app/types/enum";
+import { Gender, MetadataTypes } from "@/app/types/enum";
 import CommonUtils from "@/app/utils/common.utils";
+import noAutofill from "@/app/utils/no-autofill";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { personalDetailsSchema } from "@/app/utils/validation.util";
@@ -15,7 +16,7 @@ import {
   SelectItem,
 } from "@heroui/react";
 import useUserStore from "@/app/store/useUserStore";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import dayjs from "dayjs";
 import useCountryCityStates from "@/app/hooks/useCountryCityStates";
 import useProfile from "@/app/hooks/useProfile";
@@ -29,8 +30,9 @@ const defaultValues = {
   country: "",
   state: "",
   city: "",
-  sect: "",
   maslak: "",
+  caste: "",
+  community: "",
 };
 
 const PersonalInformation = () => {
@@ -41,10 +43,22 @@ const PersonalInformation = () => {
     countries,
     states,
     cities,
+    statesLoaded,
+    citiesLoaded,
     fetchCountries,
     fetchStates,
     fetchCities,
   } = useCountryCityStates();
+
+  // A country/state with zero options (e.g. Antarctica has no states) must
+  // not force a selection the user can never make.
+  const hasStates = !statesLoaded || states.length > 0;
+  const hasCities = !citiesLoaded || cities.length > 0;
+
+  const schema = useMemo(
+    () => personalDetailsSchema(hasStates, hasCities),
+    [hasStates, hasCities],
+  );
 
   const {
     reset,
@@ -52,7 +66,7 @@ const PersonalInformation = () => {
     setValue,
     handleSubmit,
     formState: { errors, isDirty, isSubmitting },
-  } = useForm({ defaultValues, resolver: yupResolver(personalDetailsSchema) });
+  } = useForm({ defaultValues, resolver: yupResolver(schema) });
 
   const watchedValues = useWatch({ control });
 
@@ -65,8 +79,9 @@ const PersonalInformation = () => {
         country: String(user?.address?.countryId),
         state: String(user?.address?.stateId),
         city: String(user?.address?.cityId),
-        sect: user.sect,
         maslak: user?.maslak,
+        caste: user?.caste,
+        community: user?.community,
       } as any);
 
       fetchCountries();
@@ -84,8 +99,10 @@ const PersonalInformation = () => {
   const onSubmit = handleSubmit(async (data: typeof defaultValues) => {
     await updateMyProfile({
       ...data,
+      state: data.state || undefined,
+      city: data.city || undefined,
       dob: dayjs(data?.dob).toISOString(),
-    });
+    } as any);
   });
 
   return (
@@ -165,13 +182,26 @@ const PersonalInformation = () => {
                     city: cities,
                   } as any;
 
+                  // A country/state with zero options (e.g. Antarctica has no
+                  // states) has nothing to select — don't leave a dead-end
+                  // dropdown that looks pickable but isn't.
+                  const hasNoOptions =
+                    (name === "state" && statesLoaded && states.length === 0) ||
+                    (name === "city" && citiesLoaded && cities.length === 0);
+
                   return (
                     <Autocomplete
                       label={field.label}
                       isInvalid={!!error}
                       labelPlacement="outside"
                       errorMessage={error?.message}
-                      placeholder={field.placeholder}
+                      placeholder={
+                        hasNoOptions ? "Not applicable" : field.placeholder
+                      }
+                      isDisabled={hasNoOptions}
+                      // Only a dropdown selection carries the location id, so
+                      // Chrome's saved-address suggestions must never appear.
+                      inputProps={noAutofill(`my-profile-${name}`)}
                       selectedKey={
                         inputProps.value ? String(inputProps.value) : ""
                       }
@@ -276,17 +306,22 @@ const fields = [
     type: "autocomplete",
   },
   {
-    name: "sect",
-    label: "SECT",
-    type: "select",
-    options: Object.values(Sects).map((item) => ({
-      key: item,
-      title: CommonUtils.formatTitle(item),
-    })),
+    name: "community",
+    label: "COMMUNITY",
+    placeholder: "Select or type Community",
+    type: "metadata",
+    metadataType: MetadataTypes.community,
   },
   {
     name: "maslak",
+    label: "MASLAK (OPTIONAL)",
+    type: "metadata",
+    metadataType: MetadataTypes.maslak,
+  },
+  {
+    name: "caste",
     label: "CASTE (OPTIONAL)",
+    placeholder: "Select or type Caste",
     type: "metadata",
     metadataType: MetadataTypes.caste,
   },

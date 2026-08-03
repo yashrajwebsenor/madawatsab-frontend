@@ -72,6 +72,11 @@ const EducationSection = () => {
                       errorMessage={error?.message}
                       placeholder={field.placeholder}
                       metadataType={field.metadataType!}
+                      // Occupation is the one list a user may fill with a value
+                      // we don't carry in metadata.
+                      allowsCustomValue={
+                        field.metadataType === MetadataTypes.occupation
+                      }
                       selectedKey={
                         inputProps.value ? String(inputProps.value) : ""
                       }
@@ -126,7 +131,7 @@ const fields = [
   {
     name: "occupation",
     label: "OCCUPATION",
-    placeholder: "Enter your occupation",
+    placeholder: "Select or type your occupation",
     component: "metadata",
     metadataType: MetadataTypes.occupation,
   },

@@ -4,11 +4,10 @@ import OnboardingContinueButton from "@/app/components/onboarding/OnboardingCont
 import OnboardingHeader from "@/app/components/onboarding/OnboardingHeader";
 import MetadataDropdown from "@/app/components/shared/MetadataDropdown";
 import OnboardingLeftSection from "@/app/components/shared/OnboardingLeftSection";
-import { languages } from "@/app/configs/data";
 import routes from "@/app/configs/route-paths";
 import useProfile from "@/app/hooks/useProfile";
 import useUserStore from "@/app/store/useUserStore";
-import { MaritalStatus, MetadataTypes, Sects } from "@/app/types/enum";
+import { MaritalStatus, MetadataTypes } from "@/app/types/enum";
 import CommonUtils from "@/app/utils/common.utils";
 import { onboardingStep3Schema } from "@/app/utils/validation.util";
 import { Card, Select, SelectItem } from "@heroui/react";
@@ -21,8 +20,9 @@ import { Controller, useForm } from "react-hook-form";
 const defaultValues = {
   maritalStatus: MaritalStatus.never_married,
   language: "",
-  sect: Sects.sunni,
   maslak: "",
+  caste: "",
+  community: "",
   qualification: "",
   workSector: "",
   occupation: "",
@@ -117,41 +117,16 @@ const page = () => {
                 control={control}
                 name="language"
                 render={({ field }) => (
-                  <Select
+                  <MetadataDropdown
+                    variant="underlined"
                     label="MOTHER TONGUE"
                     placeholder="Select Mother Tongue"
-                    variant="underlined"
                     isInvalid={!!errors.language}
                     errorMessage={errors.language?.message}
-                    selectedKeys={new Set([field.value ?? ""])}
-                    onChange={(e) => field.onChange(e.target.value)}
-                  >
-                    {languages.map((item) => (
-                      <SelectItem key={item.value}>{item.title}</SelectItem>
-                    ))}
-                  </Select>
-                )}
-              />
-
-              <Controller
-                control={control}
-                name="sect"
-                render={({ field }) => (
-                  <Select
-                    label="SECT"
-                    placeholder="Select Sect"
-                    variant="underlined"
-                    isInvalid={!!errors.sect}
-                    errorMessage={errors.sect?.message}
-                    selectedKeys={new Set([field.value ?? ""])}
-                    onChange={(e) => field.onChange(e.target.value)}
-                  >
-                    {Object.values(Sects).map((sect) => (
-                      <SelectItem key={sect}>
-                        {CommonUtils.formatTitle(sect)}
-                      </SelectItem>
-                    ))}
-                  </Select>
+                    metadataType={MetadataTypes.language}
+                    selectedKey={field.value ? String(field.value) : ""}
+                    onSelectionChange={(key) => field.onChange(key ?? "")}
+                  />
                 )}
               />
 
@@ -165,7 +140,43 @@ const page = () => {
                     isInvalid={!!errors.maslak}
                     errorMessage={errors.maslak?.message}
                     placeholder="Enter Maslak"
+                    metadataType={MetadataTypes.maslak}
+                    selectedKey={field.value ? String(field.value) : ""}
+                    onSelectionChange={(key) => field.onChange(key)}
+                  />
+                )}
+              />
+
+              <Controller
+                control={control}
+                name="caste"
+                render={({ field }) => (
+                  <MetadataDropdown
+                    allowsCustomValue
+                    variant="underlined"
+                    label="CASTE (OPTIONAL)"
+                    isInvalid={!!errors.caste}
+                    errorMessage={errors.caste?.message}
+                    placeholder="Select or type Caste"
                     metadataType={MetadataTypes.caste}
+                    selectedKey={field.value ? String(field.value) : ""}
+                    onSelectionChange={(key) => field.onChange(key)}
+                  />
+                )}
+              />
+
+              <Controller
+                control={control}
+                name="community"
+                render={({ field }) => (
+                  <MetadataDropdown
+                    allowsCustomValue
+                    variant="underlined"
+                    label="COMMUNITY (OPTIONAL)"
+                    isInvalid={!!errors.community}
+                    errorMessage={errors.community?.message}
+                    placeholder="Select or type Community"
+                    metadataType={MetadataTypes.community}
                     selectedKey={field.value ? String(field.value) : ""}
                     onSelectionChange={(key) => field.onChange(key)}
                   />
@@ -211,11 +222,12 @@ const page = () => {
                 name="occupation"
                 render={({ field }) => (
                   <MetadataDropdown
+                    allowsCustomValue
                     variant="underlined"
                     label="OCCUPATION"
                     isInvalid={!!errors.occupation}
                     errorMessage={errors.occupation?.message}
-                    placeholder="Select Occupation"
+                    placeholder="Select or type your occupation"
                     metadataType={MetadataTypes.occupation}
                     selectedKey={field.value ? String(field.value) : ""}
                     onSelectionChange={(key) => field.onChange(key)}

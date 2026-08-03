@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import DiscoverFilters, {
   buildFilterParams,
   defaultFilters,
@@ -7,20 +7,40 @@ import DiscoverFilters, {
 } from "./DiscoverFilters";
 import useSubscriptionAccess from "@/app/hooks/useSubscriptionAccess";
 
+// Reads the panel state back out of the query string. The URL is the source of
+// truth for the home feed, so the panel has to mirror it — otherwise a reload
+// (or back/forward) leaves the sidebar blank while the feed is still filtered,
+// and the next Apply silently drops every filter that isn't re-picked.
+const filtersFromParams = (params: URLSearchParams): Filters =>
+  Object.fromEntries(
+    Object.keys(defaultFilters).map((key) => [key, params.get(key) ?? ""]),
+  ) as Filters;
+
 // Home-feed filter panel: a thin URL-sync wrapper around the shared
 // `DiscoverFilters`. The home feed reads its query off the URL, so Apply pushes
 // the chosen filters as a query string and Clear resets it. The /search page
 // reuses the same panel but folds the filters into its React Query instead.
 const FilterSection = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { canUseAdvancedFilters } = useSubscriptionAccess();
-  const [filters, setFilters] = useState<Filters>(defaultFilters);
+  const [filters, setFilters] = useState<Filters>(() =>
+    filtersFromParams(new URLSearchParams(searchParams.toString())),
+  );
+
+  // Re-sync whenever the URL changes (first paint after hydration, browser
+  // back/forward, Clear). Keyed on the serialised query so it only fires on a
+  // real change, not on every render.
+  const queryString = searchParams.toString();
+  useEffect(() => {
+    setFilters(filtersFromParams(new URLSearchParams(queryString)));
+  }, [queryString]);
 
   const handleApply = (next: Filters) => {
-    const queryString = new URLSearchParams(
+    const applied = new URLSearchParams(
       buildFilterParams(next, canUseAdvancedFilters),
     ).toString();
-    router.push(`?${queryString}`);
+    router.push(`?${applied}`);
   };
 
   const handleReset = () => {

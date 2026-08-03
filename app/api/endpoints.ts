@@ -10,6 +10,7 @@ const ENDPOINTS = {
     SPIN_WHEEL: "/profile/spin-wheel",
     UPLOAD_PROFILE_PHOTO: "/profile/upload-profile-photo",
     UPLOAD_PHOTO: "/profile/upload-photo",
+    UPLOAD_ID_PROOF: "/profile/upload-id-proof",
     UPLOAD_MULTIPLE_PHOTOS: "/profile/upload-multiple-photos",
     DELETE_PHOTO: (id: string) => `/profile/delete-photo/${id}`,
     DISCOVER: "/profile/discover",
@@ -42,6 +43,8 @@ const ENDPOINTS = {
     VERIFY: "/payments/verify",
     INVOICES: "/payments/invoices",
     INVOICE: (id: string) => `/payments/invoices/${id}`,
+    VALIDATE_REFERRAL: "/payments/referral-code/validate",
+    VALIDATE_COUPON: "/payments/coupon/validate",
   },
   MATCHES: {
     GET_ALL: "/matches",
@@ -58,6 +61,11 @@ const ENDPOINTS = {
   HELP_SUPPORT: {
     LIST: "/help-support",
     CREATE: "/help-support",
+    FAQS: "/help-support/faqs",
+  },
+  OFFICE: {
+    // Resolves the office from the viewer's own city server-side.
+    MY_CITY: "/office/my-city",
   },
   PROFILE_VISITS: {
     LIST: "profile-visits",

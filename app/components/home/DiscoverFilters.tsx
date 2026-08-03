@@ -21,9 +21,9 @@ import {
 } from "react-icons/lu";
 import { useRouter } from "next/navigation";
 import MetadataDropdown from "../shared/MetadataDropdown";
-import { MaritalStatus, MetadataTypes, Sects } from "@/app/types/enum";
+import { MaritalStatus, MetadataTypes } from "@/app/types/enum";
 import CommonUtils from "@/app/utils/common.utils";
-import { languages } from "@/app/configs/data";
+import noAutofill from "@/app/utils/no-autofill";
 import useCountryCityStates from "@/app/hooks/useCountryCityStates";
 import useSubscriptionAccess from "@/app/hooks/useSubscriptionAccess";
 
@@ -31,7 +31,6 @@ import useSubscriptionAccess from "@/app/hooks/useSubscriptionAccess";
 // plan with `hasAdvancedFilters`. Everything else is a basic filter.
 // (User ID search lives on the dedicated /search page, not here.)
 export const ADVANCED_KEYS = [
-  "location",
   "qualification",
   "language",
   "annualIncome",
@@ -46,11 +45,11 @@ export const defaultFilters = {
   maxHeight: "",
   country: "",
   state: "",
-  sect: "",
+  location: "",
   maritalStatus: "",
   caste: "",
+  community: "",
   // advanced
-  location: "",
   qualification: "",
   language: "",
   annualIncome: "",
@@ -244,6 +243,23 @@ const DiscoverFilters = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Hydrate the geo cascade when filters arrive pre-filled (e.g. restored from
+  // the URL on load). Without this the State/City lists stay empty even though
+  // a value is selected, because they're normally only fetched on change.
+  // Split per level on purpose: `fetchStates` blanks the state *and* city lists
+  // before it resolves, so re-running it on a state change would wipe the list
+  // the selected state is displayed from.
+  useEffect(() => {
+    if (filters.country) fetchStates(Number(filters.country));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.country]);
+
+  useEffect(() => {
+    if (filters.country && filters.state)
+      fetchCities(Number(filters.country), Number(filters.state));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.country, filters.state]);
+
   const setField = (key: keyof Filters, value: string) =>
     setFilters((prev) => ({ ...prev, [key]: value }));
 
@@ -257,20 +273,15 @@ const DiscoverFilters = ({
     return true;
   }).length;
 
-  // Cascade: picking a country loads its states and clears any chosen
-  // state/city; clearing it (X) resets the whole geo chain.
+  // Cascade: changing the country clears any chosen state/city; clearing it (X)
+  // resets the whole geo chain. The list fetches are handled by the hydrate
+  // effect above, which reacts to country/state regardless of how they changed.
   const handleCountryChange = (value: string) => {
     setFilters((prev) => ({ ...prev, country: value, state: "", location: "" }));
-    if (value) fetchStates(Number(value));
   };
 
-  // Picking a state loads its cities so the City field is populated instead of
-  // empty; clearing it resets the city.
   const handleStateChange = (value: string) => {
     setFilters((prev) => ({ ...prev, state: value, location: "" }));
-    if (filters.country && value) {
-      fetchCities(Number(filters.country), Number(value));
-    }
   };
 
   // ---- Shared pieces (rendered both in the desktop sidebar and the mobile
@@ -376,6 +387,7 @@ const DiscoverFilters = ({
           variant="bordered"
           radius="lg"
           aria-label="Country"
+          inputProps={noAutofill("discover-country")}
           placeholder="Search country"
           selectedKey={filters.country || null}
           onSelectionChange={(key) => handleCountryChange((key as string) ?? "")}
@@ -394,6 +406,7 @@ const DiscoverFilters = ({
           variant="bordered"
           radius="lg"
           aria-label="State"
+          inputProps={noAutofill("discover-state")}
           isDisabled={!filters.country}
           placeholder={filters.country ? "Search state" : "Select country first"}
           selectedKey={filters.state || null}
@@ -407,19 +420,23 @@ const DiscoverFilters = ({
         </Autocomplete>
       </Field>
 
-      <Field label="Sect">
+      <Field label="City">
         <Autocomplete
           size="sm"
           variant="bordered"
           radius="lg"
-          aria-label="Sect"
-          placeholder="All"
-          selectedKey={filters.sect || null}
-          onSelectionChange={(key) => setField("sect", (key as string) ?? "")}
+          aria-label="City"
+          inputProps={noAutofill("discover-city")}
+          isDisabled={!filters.state}
+          placeholder={
+            filters.state ? "Search city" : "Select country & state first"
+          }
+          selectedKey={filters.location || null}
+          onSelectionChange={(key) => setField("location", (key as string) ?? "")}
         >
-          {Object.values(Sects).map((item) => (
-            <AutocompleteItem key={item}>
-              {CommonUtils.formatTitle(item)}
+          {cities.map((item) => (
+            <AutocompleteItem key={String(item.id)}>
+              {item.name}
             </AutocompleteItem>
           ))}
         </Autocomplete>
@@ -457,6 +474,20 @@ const DiscoverFilters = ({
         />
       </Field>
 
+      <Field label="Community">
+        <MetadataDropdown
+          size="sm"
+          radius="lg"
+          placeholder="All"
+          variant="bordered"
+          selectedKey={filters.community}
+          metadataType={MetadataTypes.community}
+          onSelectionChange={(key) =>
+            setField("community", (key as string) ?? "")
+          }
+        />
+      </Field>
+
       {/* ---- Advanced filters (active sub + hasAdvancedFilters) ---- */}
       <div className="mt-2 border-t border-default-100 pt-5">
         <SectionTitle
@@ -474,29 +505,6 @@ const DiscoverFilters = ({
 
       {canUseAdvancedFilters ? (
         <>
-          <Field label="Location (city)">
-            <Autocomplete
-              size="sm"
-              variant="bordered"
-              radius="lg"
-              aria-label="City"
-              isDisabled={!filters.state}
-              placeholder={
-                filters.state ? "Search city" : "Select country & state first"
-              }
-              selectedKey={filters.location || null}
-              onSelectionChange={(key) =>
-                setField("location", (key as string) ?? "")
-              }
-            >
-              {cities.map((item) => (
-                <AutocompleteItem key={String(item.id)}>
-                  {item.name}
-                </AutocompleteItem>
-              ))}
-            </Autocomplete>
-          </Field>
-
           <Field label="Qualification">
             <MetadataDropdown
               size="sm"
@@ -540,28 +548,22 @@ const DiscoverFilters = ({
           </Field>
 
           <Field label="Language">
-            <Autocomplete
+            <MetadataDropdown
               size="sm"
-              variant="bordered"
               radius="lg"
+              variant="bordered"
               aria-label="Language"
-              placeholder="Select language"
-              selectedKey={filters.language || null}
+              placeholder="All"
+              selectedKey={filters.language}
+              metadataType={MetadataTypes.language}
               onSelectionChange={(key) =>
                 setField("language", (key as string) ?? "")
               }
-            >
-              {languages.map((item) => (
-                <AutocompleteItem key={item.value}>
-                  {item.title}
-                </AutocompleteItem>
-              ))}
-            </Autocomplete>
+            />
           </Field>
         </>
       ) : (
         <>
-          <LockedField label="Location (city)" onUpgrade={goPricing} />
           <LockedField label="Qualification" onUpgrade={goPricing} />
           <LockedField label="Work sector" onUpgrade={goPricing} />
           <LockedField label="Annual income" onUpgrade={goPricing} />

@@ -24,7 +24,9 @@ class SocketService {
     this.socket = io(`${baseUrl}/chat`, {
       query: { userId },
       reconnection: true,
-      reconnectionAttempts: 3,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
       transports: ["websocket"],
     });
 
@@ -42,6 +44,35 @@ class SocketService {
     this.socket.on(socketEvents.LISTEN.CONNECT_ERROR, (error: Error) => {
       console.log("❌ Connection Error:", error);
     });
+
+    // Backgrounded tabs get frozen by the browser, so socket.io's own
+    // reconnect loop stalls with them. When the tab becomes visible again,
+    // force a reconnect check immediately instead of waiting on the
+    // (possibly long) backoff timer to fire.
+    this.attachVisibilityHandler();
+  }
+
+  private visibilityHandlerAttached = false;
+
+  private attachVisibilityHandler() {
+    if (this.visibilityHandlerAttached || typeof document === "undefined") return;
+    this.visibilityHandlerAttached = true;
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible" && this.socket && !this.socket.connected) {
+        this.socket.connect();
+      }
+    });
+  }
+
+  isConnected(): boolean {
+    return !!this.socket?.connected;
+  }
+
+  reconnect() {
+    if (this.socket && !this.socket.connected) {
+      this.socket.connect();
+    }
   }
 
   /**

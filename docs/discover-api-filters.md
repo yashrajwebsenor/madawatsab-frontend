@@ -78,10 +78,11 @@ GET /api/profile/discover?page=1&limit=10&minAge=25&maxAge=32&sect=sunni&country
 | `minHeight`     | number | `150`           | Min height in **cm**. |
 | `maxHeight`     | number | `180`           | Max height in **cm**. |
 | `sect`          | enum   | `sunni`         | Exact match. Values: `sunni`, `shia`, `other`. |
-| `maritalStatus` | enum   | `never_married` | Exact match. Values: `never_married`, `divorced`, `widowed`. |
+| `maritalStatus` | enum   | `never_married` | Exact match. Values: `never_married`, `divorced`, `widowed`, `separated`, `awaiting_divorce`. |
 | `caste`         | string | `Sheikh`        | Partial, case-insensitive match on the user's **community** field. |
 | `country`       | number (id) | `1`        | Country id (see [Location reference](#location-reference-ids)). |
 | `state`         | number (id) | `12`       | State id. |
+| `location`      | number (id) | `42`       | **City id**. Free for everyone (was advanced-only before Jul 2026). |
 
 ### Advanced filters — require an **active subscription with advanced filters**
 
@@ -93,7 +94,6 @@ be ignored).
 
 | Param          | Type        | Example             | How it filters |
 | -------------- | ----------- | ------------------- | -------------- |
-| `location`     | number (id) | `42`                | **City id** (see reference). City filtering is advanced-only; country/state above are normal. |
 | `userId`       | string      | `MADA001`           | Exact match on the public member id (search a specific profile). |
 | `fullName`     | string      | `Ahmed Khan`        | Partial, case-insensitive name match. Min **3 chars** (shorter values are ignored). |
 | `mobile`       | string      | `9876543210`        | Exact mobile-number match. Min **3 chars** (shorter values are ignored). |
@@ -139,8 +139,8 @@ id for each.
 ## Filter combination rules
 
 - All filters are **AND**-combined (narrowing the result set).
-- Geo: `country` + `state` are applied first (normal); `location`/city is added
-  only when the viewer has advanced filters.
+- Geo: `country`, `state` and `location`/city are all normal filters — no
+  subscription needed for any of them.
 - `online=true` combines with every other filter and still paginates correctly.
 - Advanced params sent by a non-eligible user are dropped server-side; results
   come back as if those params were not sent.

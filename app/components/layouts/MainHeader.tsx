@@ -37,6 +37,7 @@ import useSubscriptionAccess from "@/app/hooks/useSubscriptionAccess";
 import CommonUtils from "@/app/utils/common.utils";
 import DeleteAccountDialog from "../dialogs/DeleteAccountDialog";
 import NotificationBell from "../shared/NotificationBell";
+import CityOfficeCard from "../shared/CityOfficeCard";
 
 const accountLinks = [
   { key: "profile", label: "My Profile", icon: LuUser, href: routes.profile },
@@ -254,6 +255,10 @@ const MainHeader = () => {
                     Delete Account
                   </button>
                 </div>
+
+                {/* Mobile counterpart of the office block in UserMenu's
+                    dropdown. Renders nothing when the city has no office. */}
+                <CityOfficeCard variant="compact" className="mt-4" />
               </DrawerBody>
             </>
           )}

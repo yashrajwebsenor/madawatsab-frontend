@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useRazorpay } from "react-razorpay";
 import {
   addToast,
+  Autocomplete,
+  AutocompleteItem,
   Button,
   Card,
   Input,
@@ -27,8 +29,10 @@ import APP_CONFIG from "@/app/configs/app-config";
 import useUserStore from "@/app/store/useUserStore";
 import useConfigStore from "@/app/store/useConfigStore";
 import useProfile from "@/app/hooks/useProfile";
+import useCountryCityStates from "@/app/hooks/useCountryCityStates";
 import { Gender, PaymentTypes } from "@/app/types/enum";
 import CommonUtils from "@/app/utils/common.utils";
+import noAutofill from "@/app/utils/no-autofill";
 import PageHeaderWrapper from "@/app/components/shared/PageHeaderWrapper";
 
 type Step = "loading" | "no-subscription" | "has-agent" | "pending" | "intro" | "form" | "done";
@@ -57,14 +61,23 @@ const page = () => {
   const { config } = useConfigStore();
   const { getMyProfile } = useProfile();
   const { Razorpay } = useRazorpay();
+  const { countries, states, cities, fetchCountries, fetchStates, fetchCities } =
+    useCountryCityStates();
 
   const [step, setStep] = useState<Step>("loading");
   const [paying, setPaying] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [country, setCountry] = useState("");
+  const [state, setState] = useState("");
+  const [city, setCity] = useState("");
   const [pincode, setPincode] = useState("");
   const [preferredAgentGender, setPreferredAgentGender] = useState<string>("");
 
   const fee = Number(config?.requestAgentFee ?? 0);
+  // VVIP gets a dedicated agent as part of the plan: no fee screen, and the
+  // ticket is usually already raised (auto-created at plan activation), so the
+  // page lands on "pending" straight away.
+  const isVvip = !!user?.subscription?.capabilities?.isVvip;
 
   useEffect(() => {
     const init = async () => {
@@ -88,16 +101,20 @@ const page = () => {
         if (resolved === "pending" || resolved === "form") {
           setStep(resolved);
         } else {
-          setStep("intro");
+          setStep(isVvip ? "form" : "intro");
         }
       } catch (error) {
         console.log(error);
-        setStep("intro");
+        setStep(isVvip ? "form" : "intro");
       }
     };
 
     init();
   }, [user]);
+
+  useEffect(() => {
+    fetchCountries();
+  }, []);
 
   const handlePay = async () => {
     try {
@@ -161,6 +178,9 @@ const page = () => {
       setSubmitting(true);
       await api.post(ENDPOINTS.AGENTS.REQUEST, {
         pincode: pincode.trim() || undefined,
+        countryId: country ? Number(country) : undefined,
+        stateId: state ? Number(state) : undefined,
+        cityId: city ? Number(city) : undefined,
         preferredAgentGender: preferredAgentGender || undefined,
       });
       await getMyProfile();
@@ -214,8 +234,9 @@ const page = () => {
             <FiClock className="mx-auto text-warning text-4xl mb-3" />
             <h3 className="text-lg font-bold">Request Pending</h3>
             <p className="text-sm text-gray-500 mt-1">
-              Your request has been received. The admin will assign you an
-              agent soon.
+              {isVvip
+                ? "Your VVIP plan includes a dedicated agent. Your request is already with the admin team and an agent will be assigned soon."
+                : "Your request has been received. The admin will assign you an agent soon."}
             </p>
           </Card>
         )}
@@ -262,15 +283,72 @@ const page = () => {
           <Card shadow="none" className="p-6 sm:p-8">
             <h3 className="text-lg font-bold mb-1">Almost there</h3>
             <p className="text-sm text-gray-500 mb-6">
-              Tell us your preference so we can find the right agent for you.
+              {isVvip
+                ? "A dedicated agent is included in your VVIP plan — no extra fee. Every field is optional; submit as is and the admin will pick the best agent for you."
+                : "Tell us your preference so we can find the right agent for you. Every field is optional."}
             </p>
 
             <div className="grid gap-5">
+              <div className="grid gap-5 sm:grid-cols-3 items-start">
+                <Autocomplete
+                  label="COUNTRY (OPTIONAL)"
+                  labelPlacement="outside"
+                  placeholder="Select Country"
+                  inputProps={noAutofill("request-agent-country")}
+                  selectedKey={country || null}
+                  onSelectionChange={(key) => {
+                    const val = (key as string) || "";
+                    setCountry(val);
+                    setState("");
+                    setCity("");
+                    if (val) fetchStates(Number(val));
+                  }}
+                >
+                  {countries?.map((item) => (
+                    <AutocompleteItem key={item.id}>{item.name}</AutocompleteItem>
+                  ))}
+                </Autocomplete>
+
+                <Autocomplete
+                  label="STATE/PROVINCE (OPTIONAL)"
+                  labelPlacement="outside"
+                  placeholder="Select State"
+                  inputProps={noAutofill("request-agent-state")}
+                  isDisabled={!country}
+                  selectedKey={state || null}
+                  onSelectionChange={(key) => {
+                    const val = (key as string) || "";
+                    setState(val);
+                    setCity("");
+                    if (val) fetchCities(Number(country), Number(val));
+                  }}
+                >
+                  {states?.map((item) => (
+                    <AutocompleteItem key={item.id}>{item.name}</AutocompleteItem>
+                  ))}
+                </Autocomplete>
+
+                <Autocomplete
+                  label="CITY (OPTIONAL)"
+                  labelPlacement="outside"
+                  placeholder="Select City"
+                  inputProps={noAutofill("request-agent-city")}
+                  isDisabled={!state}
+                  selectedKey={city || null}
+                  onSelectionChange={(key) => setCity((key as string) || "")}
+                >
+                  {cities?.map((item) => (
+                    <AutocompleteItem key={item.id}>{item.name}</AutocompleteItem>
+                  ))}
+                </Autocomplete>
+              </div>
+
               <Input
                 label="PINCODE (OPTIONAL)"
                 labelPlacement="outside"
                 placeholder="e.g. 400001"
                 description="Prefer an agent from your local area? Enter your pincode."
+                {...noAutofill("request-agent-pincode")}
                 value={pincode}
                 onChange={(e) => setPincode(e.target.value)}
               />

@@ -9,6 +9,7 @@ const routes = {
   blockedUsers: "/blocked",
   search: "/search",
   requestAgent: "/request-agent",
+  verifyIdentity: "/verify-identity",
 
   auth: {
     login: "/auth/login",

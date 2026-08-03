@@ -561,7 +561,10 @@ const ActivityPanel = ({
   });
 
   const rows = useMemo(() => {
-    const list = data ?? [];
+    // Drop rows whose actor no longer exists (dangling ref → null profile after
+    // populate, e.g. a hard-deleted user). Every card reads profile.* so a null
+    // here crashes the whole list.
+    const list = (data ?? []).filter((r) => r.profile);
     // Backend returns newest-first; reverse a shallow copy for "oldest".
     return sort === "oldest" ? [...list].reverse() : list;
   }, [data, sort]);

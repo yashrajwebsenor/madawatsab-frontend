@@ -13,14 +13,14 @@ There are now **two distinct kinds of photo**:
 | Kind | Type (`type` field) | Count | Reviewed? | Who sees it |
 |------|--------------------|-------|-----------|-------------|
 | **Profile photo** (avatar) | `profile_picture` | exactly **1** | **No** — visible immediately | everyone |
-| **Other / gallery photos** | `profile_photo` | up to **5** | **Yes** — admin must approve | owner always; others only after approval |
+| **Other / gallery photos** | `profile_photo` | up to **5** | **Yes** — admin must approve | everyone, always — pending ones carry a badge |
 
 Key rules:
 
 1. **Avatar = `profilePhoto`**, NOT `photos[0]`. Use `profilePhoto.url` everywhere you show the user's picture (lists, chat, headers, etc.).
 2. **Profile photo is single + replace-on-upload.** Uploading a new one replaces the old. Not reviewed — shows instantly.
-3. **Gallery photos are moderated.** A newly uploaded gallery photo is `status: "pending"`. It is visible **only to its owner** (show a "Pending review" badge) until an admin approves it (`status: "approved"`). Rejected photos are **deleted** (they just disappear).
-4. **Other users never see pending photos** — the API already filters them out, so when viewing someone else's profile you only get approved gallery photos.
+3. **Gallery photos are moderated but always visible.** A newly uploaded gallery photo is `status: "pending"`. It is shown normally to **every viewer** (owner and other users alike) with a "Pending review" badge overlaid, until an admin approves it (`status: "approved"`) and the badge disappears. Rejected photos are **deleted** (they just disappear).
+4. **Every viewer gets the `status` field** — the API does not filter gallery photos by review status for anyone. The frontend is what decides whether to render the badge (render it whenever `status === "pending"`, regardless of whose profile is being viewed).
 
 ---
 
@@ -54,7 +54,7 @@ Key rules:
 }
 ```
 
-> `status` is only meaningful on **your own** profile (where pending photos are included). On other users' profiles `photos` contains approved items only.
+> `status` is present on gallery photos everywhere — your own profile and every other user's profile alike. Always check it and render the "Pending review" badge when `status === "pending"`, no matter whose profile you're rendering.
 
 ---
 
@@ -86,10 +86,10 @@ Returns the full user. `photos` here includes **both pending and approved** (so 
 UI: render `profilePhoto` as the avatar; render `photos` as a gallery, overlaying a **"Pending review"** badge on any item where `status === "pending"`.
 
 ### 3.2 Get another user's profile — `GET /profile/:id`
-`profilePhoto` present; `photos` contains **approved only** (no `pending` ever leaks). Same blur/subscription gating as before applies to the rest of the payload.
+`profilePhoto` present; `photos` includes **both pending and approved**, each with its `status` — render the pending badge here too. Same blur/subscription gating as before applies to the rest of the payload.
 
 ### 3.3 Discovery list — `GET /profile/discover?page=&limit=`
-Each profile card carries `profilePhoto` + approved-only `photos`. **Use `profilePhoto.url` for the card image** (not `photos[0]`).
+Each profile card carries `profilePhoto` + `photos` (pending and approved). **Use `profilePhoto.url` for the card image** (not `photos[0]`).
 
 ### 3.4 Upload / replace profile photo — `POST /profile/upload-profile-photo`
 - `Content-Type: multipart/form-data`
@@ -151,15 +151,14 @@ Works for either kind (pass the photo's `_id`). Removes it from Cloudinary + DB.
 - Switch the image source from `photos?.[0]?.url` → **`profilePhoto?.url`** (with your existing placeholder fallback).
 
 ### Viewing another user
-- Gallery = the `photos` array as-is (already approved-only). No pending handling needed.
+- Gallery = the `photos` array as-is, pending items included. Overlay the same "Pending review" badge used on your own profile whenever `status === "pending"` — the photo itself still renders normally.
 
 ---
 
 ## 5. Edge cases / notes
 
 - `profilePhoto` can be `null` (user hasn't set one) — keep a placeholder/initials fallback.
-- On another user's profile, `photos` may be empty even if they uploaded photos — theirs may still be pending. That's expected.
-- Pending photos appear in the owner's `GET /profile` only; do not assume a pending photo is visible to anyone else.
+- Pending photos are visible to every viewer, on every profile — never hide a pending photo, only badge it.
 - Gallery cap is 5 (enforce in UI; backend won't add a 6th meaningfully).
 - Field names matter: profile photo + single gallery use form key **`photo`**; multiple gallery uses **`photos`**.
 

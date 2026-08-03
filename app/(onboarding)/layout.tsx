@@ -41,7 +41,7 @@ const layout = ({ children }: { children: React.ReactNode }) => {
 
     // Already onboarded — leave the flow (family is the one allowed extra step).
     if (user.isOnboardingCompleted && pathname !== routes.onboarding.family) {
-      router.push(routes.home);
+      router.replace(routes.home);
       return;
     }
 
@@ -61,7 +61,8 @@ const layout = ({ children }: { children: React.ReactNode }) => {
     }
 
     if (currentStep > firstIncompleteStep) {
-      router.push(stepPaths[firstIncompleteStep - 1]);
+      // replace: corrective bounce, not a user nav — must not grow history.
+      router.replace(stepPaths[firstIncompleteStep - 1]);
     }
   }, [user, pathname, router]);
 

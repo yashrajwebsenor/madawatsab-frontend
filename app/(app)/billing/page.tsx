@@ -33,6 +33,13 @@ const InvoiceRow = ({ invoice }: { invoice: Invoice }) => {
               {invoice.invoiceNumber ?? "—"} ·{" "}
               {dayjs(invoice.purchasedAt).format("DD MMM YYYY")}
             </p>
+            {/* Without this the charged amount looks like the wrong price. */}
+            {invoice.couponCode && invoice.couponDiscount ? (
+              <p className="text-xs text-success">
+                Coupon {invoice.couponCode} · saved{" "}
+                {inr(invoice.couponDiscount)}
+              </p>
+            ) : null}
           </div>
         </div>
 

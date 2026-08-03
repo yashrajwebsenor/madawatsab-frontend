@@ -32,10 +32,9 @@ const PhotoUploadPlaceholder = ({ onChange }: Props) => {
           items-center 
           justify-center 
           border-2 
-          border-dashed 
-          border-gray-300 
-          rounded-xl 
-          cursor-pointer 
+          border-dashed
+          border-gray-300
+          cursor-pointer
           hover:bg-gray-50 
           transition-colors
         "

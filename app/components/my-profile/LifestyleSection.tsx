@@ -9,12 +9,9 @@ import { Button, Select, SelectItem } from "@heroui/react";
 import useUserStore from "@/app/store/useUserStore";
 import useProfile from "@/app/hooks/useProfile";
 import { useEffect } from "react";
-import {
-  hobbiesList,
-  languages,
-  musicTypes,
-  sportsList,
-} from "@/app/configs/data";
+import { hobbiesList, musicTypes, sportsList } from "@/app/configs/data";
+import useMetadataOptions from "@/app/hooks/useMetadataOptions";
+import { MetadataTypes } from "@/app/types/enum";
 
 const defaultValues = {
   dietPreference: "",
@@ -36,6 +33,11 @@ const toOptions = (enumObj: Record<string, string>) =>
 const LifestyleSection = () => {
   const { user } = useUserStore();
   const { updateMyProfile } = useProfile();
+  // Languages are admin-managed metadata, not a hard-coded list.
+  const { options: languageOptions } = useMetadataOptions(
+    MetadataTypes.language,
+  );
+  const fields = buildFields(languageOptions);
 
   const {
     reset,
@@ -157,7 +159,9 @@ export default LifestyleSection;
 const enumOptions = (enumObj: Record<string, string>) =>
   toOptions(enumObj).map((item) => ({ value: item.key, title: item.title }));
 
-const fields = [
+// `languages` is fetched from the metadata API by the component; everything
+// else is a fixed enum or a static list, so only that one is passed in.
+const buildFields = (languages: { title: string; value: string }[]) => [
   {
     name: "dietPreference",
     label: "DIET PREFERENCE",

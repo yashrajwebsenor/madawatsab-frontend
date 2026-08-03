@@ -1,11 +1,12 @@
 import { User } from "@/app/types/types";
 import CommonUtils from "@/app/utils/common.utils";
-import { Image, Tab, Tabs } from "@heroui/react";
+import { Chip, Image, Tab, Tabs } from "@heroui/react";
 import dayjs from "dayjs";
 import { useState } from "react";
 import ViewPhotosDialog from "../dialogs/ViewPhotosDialog";
 import { IoIosLock } from "react-icons/io";
 import LockedContent from "../shared/LockedContent";
+import { AttachmentStatus } from "@/app/types/enum";
 
 // `locked` = the viewer has no active subscription, so the backend returned a
 // basic-only payload. Show deliberate locked states instead of "Not Specified".
@@ -24,12 +25,18 @@ const MatchExtraDetails = ({
   });
 
   const photos = profile?.photos || [];
-  // Photos stay blurred whenever the backend says so (no sub, or private target).
-  const photosBlurred = profile?.shouldBlur ?? profile?.isPrivate;
+  // True for a fully private profile OR a public profile with just its
+  // gallery locked — either way the gallery-request flow gates the photos.
+  const isGalleryLockedProfile = !!(
+    profile?.isPrivate || profile?.isGalleryPrivate
+  );
+  // Photos stay blurred whenever the backend says so (no sub, or private/gallery-locked target).
+  const photosBlurred = profile?.shouldBlur ?? isGalleryLockedProfile;
   const galleryLocked = locked || photosBlurred;
 
   const aboutProfileData = {
     annualIncome: profile?.annualIncome,
+    caste: profile?.caste,
     community: profile?.community,
     dob: profile?.dob
       ? dayjs(profile.dob).format("DD MMMM YYYY")
@@ -51,6 +58,22 @@ const MatchExtraDetails = ({
     motherName: profile?.family?.motherName ?? "",
     motherOccupation: profile?.family?.motherOccupation ?? "",
   };
+
+  // Siblings are counts only; unmarried is derived, never stored.
+  const siblingCounts = [
+    {
+      label: "Brothers",
+      total: profile?.family?.brothers ?? 0,
+      married: profile?.family?.marriedBrothers ?? 0,
+    },
+    {
+      label: "Sisters",
+      total: profile?.family?.sisters ?? 0,
+      married: profile?.family?.marriedSisters ?? 0,
+    },
+  ];
+
+  const hasSiblings = siblingCounts.some((item) => item.total > 0);
 
   return (
     <div className="bg-white rounded-[2rem] p-4 sm:p-6 shadow-sm border border-gray-100">
@@ -156,6 +179,30 @@ const MatchExtraDetails = ({
                 No family details provided.
               </div>
             )}
+
+            {hasSiblings && (
+              <div className="mt-4 grid gap-3">
+                <span className="text-gray-400 text-sm md:text-base font-medium">
+                  Siblings
+                </span>
+                <div className="grid grid-cols-2 gap-4 rounded-2xl border border-gray-50 p-4">
+                  {siblingCounts.map((item) => (
+                    <div key={item.label}>
+                      <span className="text-gray-400 text-xs block">
+                        {item.label}
+                      </span>
+                      <span className="text-slate-800 text-sm font-bold">
+                        {item.total}
+                      </span>
+                      <span className="text-gray-400 text-xs block mt-1">
+                        {item.married} married ·{" "}
+                        {Math.max(item.total - item.married, 0)} unmarried
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           )}
         </Tab>
@@ -175,12 +222,12 @@ const MatchExtraDetails = ({
             <LockedContent
               className="my-4"
               title={
-                profile.isPrivate
+                isGalleryLockedProfile
                   ? "Private photo gallery"
                   : "Photo gallery is locked"
               }
               reason={
-                profile.isPrivate
+                isGalleryLockedProfile
                   ? "This member keeps their gallery private."
                   : "Subscribe to a plan to view the full photo gallery."
               }
@@ -191,11 +238,12 @@ const MatchExtraDetails = ({
               photos.map((photo: any, index: number) => (
                 <div
                   key={index}
-                  className="relative aspect-[4/5] overflow-hidden rounded-2xl"
+                  className="relative aspect-[4/5] overflow-hidden"
                 >
                   <Image
                     src={photo?.url}
                     alt={`Gallery photo ${index + 1}`}
+                    radius="none"
                     className="w-full h-full object-cover cursor-pointerw"
                     isZoomed
                     onClick={() =>
@@ -206,6 +254,16 @@ const MatchExtraDetails = ({
                       })
                     }
                   />
+                  {photo?.status === AttachmentStatus.pending && (
+                    <Chip
+                      size="sm"
+                      color="warning"
+                      variant="solid"
+                      className="absolute left-2 top-2 z-20"
+                    >
+                      Pending review
+                    </Chip>
+                  )}
                 </div>
               ))
             ) : (

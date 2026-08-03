@@ -11,6 +11,7 @@ import useFirebase from "../hooks/useFirebase";
 import useChatRooms from "../hooks/useChatRooms";
 import NotificationBar from "../components/notifications/NotificationBar";
 import ChatSocketListener from "../components/chat/ChatSocketListener";
+import IdProofPromptModal from "../components/verify-identity/IdProofPromptModal";
 import socketService from "../socket";
 
 const layout = ({ children }: { children: React.ReactNode }) => {
@@ -32,12 +33,15 @@ const layout = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     if (!user?.isOnboardingCompleted) {
-      router.push(routes.onboarding.step1);
+      // replace, not push: this is a corrective bounce, not a user-initiated
+      // nav — pushing would grow history and make back-button presses
+      // ping-pong between this redirect and wherever it bounces from.
+      router.replace(routes.onboarding.step1);
       return;
     }
 
     if (nextGate !== routes.home) {
-      router.push(nextGate);
+      router.replace(nextGate);
       return;
     }
 
@@ -60,6 +64,7 @@ const layout = ({ children }: { children: React.ReactNode }) => {
       <main className="flex-1 grid grid-cols-1">{children}</main>
       <ChatSocketListener />
       <NotificationBar />
+      <IdProofPromptModal />
     </div>
   );
 };

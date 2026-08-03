@@ -53,26 +53,8 @@ export const heights = [
   { title: "213 cm (7'0)", value: 213 },
 ];
 
-export const languages = [
-  { title: "English (Latin script)", value: "English" },
-  { title: "Hindi (हिंदी लिपि)", value: "Hindi" },
-  { title: "Urdu (اردو رسم الخط)", value: "Urdu" },
-  { title: "Arabic (العربية)", value: "Arabic" },
-  { title: "Marathi (मराठी लिपि)", value: "Marathi" },
-  { title: "Bengali (বাংলা লিপি)", value: "Bengali" },
-  { title: "Tamil (தமிழ் लिपि)", value: "Tamil" },
-  { title: "Telugu (తెలుగు लिपि)", value: "Telugu" },
-  { title: "Gujarati (ગુજરાતી लिपि)", value: "Gujarati" },
-  { title: "Kannada (ಕನ್ನಡ लिपि)", value: "Kannada" },
-  { title: "Malayalam (മലയാളം लिपि)", value: "Malayalam" },
-  { title: "Punjabi (Gurmukhi लिपि)", value: "Punjabi" },
-  { title: "Sanskrit (संस्कृतम्)", value: "Sanskrit" },
-  { title: "Spanish (Español)", value: "Spanish" },
-  { title: "French (Français)", value: "French" },
-  { title: "German (Deutsch)", value: "German" },
-  { title: "Mandarin (中文)", value: "Mandarin" },
-  { title: "Japanese (日本語)", value: "Japanese" },
-];
+// Languages are admin-managed metadata now (MetadataTypes.language) — fetch
+// them with MetadataDropdown / useMetadataOptions instead of a static list.
 
 export const sportsList = [
   { title: "Cricket", value: "Cricket" },
@@ -151,7 +133,7 @@ export const matchProfiles = [
   {
     _id: "65f2a1b2e4b0a1a2b3c4d5e1",
     fullName: "Arjun Mehta",
-    sect: "Sunni",
+    community: "Sunni",
     occupation: "Software Engineer",
     dob: "1994-05-12T08:30:00.000Z",
     city: "Bangalore",
@@ -166,7 +148,7 @@ export const matchProfiles = [
   {
     _id: "65f2a1b2e4b0a1a2b3c4d5e2",
     fullName: "Priya Sharma",
-    sect: "Sunni",
+    community: "Sunni",
     occupation: "Marketing Manager",
     dob: "1996-11-24T14:15:00.000Z",
     city: "Mumbai",
@@ -181,7 +163,7 @@ export const matchProfiles = [
   {
     _id: "65f2a1b2e4b0a1a2b3c4d5e3",
     fullName: "Rohan Das",
-    sect: "Sunni",
+    community: "Sunni",
     occupation: "Graphic Designer",
     dob: "1992-08-03T09:45:00.000Z",
     city: "Kolkata",
@@ -196,7 +178,7 @@ export const matchProfiles = [
   {
     _id: "65f2a1b2e4b0a1a2b3c4d5e4",
     fullName: "Ananya Iyer",
-    sect: "Sunni",
+    community: "Sunni",
     occupation: "Data Scientist",
     dob: "1995-02-28T11:20:00.000Z",
     city: "Chennai",
@@ -211,7 +193,7 @@ export const matchProfiles = [
   {
     _id: "65f2a1b2e4b0a1a2b3c4d5e5",
     fullName: "Vikram Singh",
-    sect: "Sunni",
+    community: "Sunni",
     occupation: "Architect",
     dob: "1991-12-10T17:00:00.000Z",
     city: "New Delhi",
@@ -226,7 +208,7 @@ export const matchProfiles = [
   {
     _id: "65f2a1b2e4b0a1a2b3c4d5e6",
     fullName: "Sana Khan",
-    sect: "Sunni",
+    community: "Sunni",
     occupation: "Pediatrician",
     dob: "1993-07-15T06:10:00.000Z",
     city: "Hyderabad",
@@ -259,7 +241,6 @@ export const matchProfileDetails = {
   language: "English, Arabic, Urdu",
   maritalStatus: "Never Married",
   maslak: "Sunni",
-  sect: "Sunni",
   profileFor: "Self",
   qualification: "MSc Computer Science, Heriot-Watt University",
   state: "Dubai",
@@ -598,7 +579,7 @@ export const searchFiltersDefaultValues = {
   minAge: "",
   maxAge: "",
   location: "",
-  sect: "",
+  community: "",
   maslak: "",
   qualification: "",
 };
